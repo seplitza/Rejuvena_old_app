@@ -1,0 +1,337 @@
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useAppSelector } from '../store/hooks';
+import Head from 'next/head';
+
+interface PhotoSet {
+  front: string | null;
+  left34: string | null;
+  leftProfile: string | null;
+  right34: string | null;
+  rightProfile: string | null;
+  closeup: string | null;
+}
+
+interface PhotoDiaryData {
+  before: PhotoSet;
+  after: PhotoSet;
+  botAgeBefore: number | null;
+  botAgeAfter: number | null;
+  realAgeBefore: number | null;
+  realAgeAfter: number | null;
+  weightBefore: number | null;
+  weightAfter: number | null;
+  heightBefore: number | null;
+  heightAfter: number | null;
+  commentBefore: string;
+  commentAfter: string;
+}
+
+const photoTypes: Array<{ id: keyof PhotoSet; label: string }> = [
+  { id: 'front', label: 'Вид спереди' },
+  { id: 'left34', label: '3/4 слева' },
+  { id: 'leftProfile', label: 'Профиль слева' },
+  { id: 'right34', label: '3/4 справа' },
+  { id: 'rightProfile', label: 'Профиль справа' },
+  { id: 'closeup', label: 'твоё\nпроблемное\nместо\nкрупный план' },
+];
+
+const PhotoDiaryPage: React.FC = () => {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [showRules, setShowRules] = useState(false);
+  
+  const [data, setData] = useState<PhotoDiaryData>({
+    before: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
+    after: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
+    botAgeBefore: null,
+    botAgeAfter: null,
+    realAgeBefore: null,
+    realAgeAfter: null,
+    weightBefore: null,
+    weightAfter: null,
+    heightBefore: null,
+    heightAfter: null,
+    commentBefore: '',
+    commentAfter: '',
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+  }, [isAuthenticated, router]);
+
+  const handleFileUpload = async (type: 'before' | 'after', photoKey: keyof PhotoSet, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setData(prev => ({
+        ...prev,
+        [type]: { ...prev[type], [photoKey]: result }
+      }));
+      
+      if (photoKey === 'front') {
+        setTimeout(() => {
+          const mockAge = Math.floor(Math.random() * 10) + 30;
+          if (type === 'before') {
+            setData(prev => ({ ...prev, botAgeBefore: mockAge }));
+          } else {
+            setData(prev => ({ ...prev, botAgeAfter: mockAge }));
+          }
+        }, 1000);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDownloadCollage = () => {
+    alert('Функция генерации коллажа будет реализована после интеграции с API');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Фотодневник - Rejuvena</title>
+      </Head>
+      
+      <div className="min-h-screen bg-white">
+        <header className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="text-blue-700 hover:text-blue-800"
+            >
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-blue-100 rounded-full mr-3 flex items-center justify-center">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-blue-800">Rejuvena</h1>
+            </div>
+            
+            <button className="text-gray-400">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="border-b">
+            <div className="max-w-7xl mx-auto px-4 flex items-center justify-between py-2">
+              <h2 className="text-xl font-bold text-blue-800">Фотодневник</h2>
+              <button 
+                onClick={() => setShowRules(true)}
+                className="text-blue-700 underline font-medium"
+              >
+                правила
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          <div className="mb-6 text-blue-800 space-y-3 text-sm leading-relaxed">
+            <p className="font-bold">Время загрузить твои новые фото!</p>
+            <p>
+              Сделай 6 снимков, как показано в примерах. После окончания каждого курса возвращайся сюда с новым 
+              набором из 6 фотографий и зафиксируй изменения «До» и «После».
+            </p>
+            <p>
+              Ты сможешь скачать коллаж с результатами, чтобы поделиться им или оставить себе на память.
+            </p>
+            <p className="font-bold">Удачи!</p>
+          </div>
+
+          <div className="mb-6 bg-pink-50 border border-pink-200 rounded-lg p-3 flex items-center">
+            <div className="flex-shrink-0 mr-3">
+              <span className="text-2xl">💡</span>
+            </div>
+            <p className="text-sm text-blue-800 flex-1">
+              <span className="font-bold">Tip!</span> When taking pictures, keep your camera horizontally
+            </p>
+            <div className="flex-shrink-0 flex items-center space-x-2">
+              <div className="w-12 h-10 bg-white border-2 border-blue-800 rounded flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-gray-300"></div>
+              </div>
+              <span className="text-2xl">👌</span>
+              <div className="w-10 h-12 bg-white border-2 border-red-500 rounded flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-gray-300"></div>
+              </div>
+              <span className="text-2xl">❌</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-blue-800">Пример</h3>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-blue-800">До</h3>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-blue-800">После</h3>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {photoTypes.map((photoType) => (
+              <div key={photoType.id} className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-full aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 mb-2">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                      <span className="text-gray-400 text-sm">Пример</span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium text-blue-800 text-center whitespace-pre-line">
+                    {photoType.label}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
+                    {data.before[photoType.id] ? (
+                      <img src={data.before[photoType.id]!} alt="До" className="w-full h-full object-cover" />
+                    ) : (
+                      <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload('before', photoType.id, file);
+                          }}
+                        />
+                        <span className="text-blue-600 font-medium">загрузить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
+                    {data.after[photoType.id] ? (
+                      <img src={data.after[photoType.id]!} alt="После" className="w-full h-full object-cover" />
+                    ) : (
+                      <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload('after', photoType.id, file);
+                          }}
+                        />
+                        <span className="text-blue-600 font-medium">загрузить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-sm font-medium text-blue-800">Бот определил возраст</div>
+              <input type="text" value={data.botAgeBefore || ''} readOnly placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+              <input type="text" value={data.botAgeAfter || ''} readOnly placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-sm font-medium text-blue-800">возраст</div>
+              <input type="number" value={data.realAgeBefore || ''} onChange={(e) => setData(prev => ({ ...prev, realAgeBefore: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+              <input type="number" value={data.realAgeAfter || ''} onChange={(e) => setData(prev => ({ ...prev, realAgeAfter: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-sm font-medium text-blue-800">вес</div>
+              <input type="number" value={data.weightBefore || ''} onChange={(e) => setData(prev => ({ ...prev, weightBefore: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+              <input type="number" value={data.weightAfter || ''} onChange={(e) => setData(prev => ({ ...prev, weightAfter: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-sm font-medium text-blue-800">рост</div>
+              <input type="number" value={data.heightBefore || ''} onChange={(e) => setData(prev => ({ ...prev, heightBefore: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+              <input type="number" value={data.heightAfter || ''} onChange={(e) => setData(prev => ({ ...prev, heightAfter: parseInt(e.target.value) || null }))} placeholder="..." className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-center" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-sm font-medium text-blue-800">комментарий</div>
+              <textarea value={data.commentBefore} onChange={(e) => setData(prev => ({ ...prev, commentBefore: e.target.value }))} placeholder="..." rows={3} className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg resize-none" />
+              <textarea value={data.commentAfter} onChange={(e) => setData(prev => ({ ...prev, commentAfter: e.target.value }))} placeholder="..." rows={3} className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg resize-none" />
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleDownloadCollage}
+              className="flex items-center px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
+            >
+              скачать коллаж
+              <svg className="ml-2 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+            </button>
+          </div>
+        </main>
+
+        {showRules && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-blue-800">Правила фотодневника</h2>
+                <button
+                  onClick={() => setShowRules(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4 text-blue-800">
+                <p className="font-bold">Проверьте, как вы выглядите сейчас. Сделайте снимок и загрузите его, посмотрите результат.</p>
+                <p>Наш Age-bot угадает, сколько лет выглядит ваше лицо сейчас. Точность работы Age-bot очень высока - 95% результатов корректны.</p>
+                <p>Можно ли обмануть его? Нет... и да. Age-bot видит возрастные изменения в структуре костей - это невозможно подделать! Но он также проверяет состояние и расположение ваших мягких тканей. Это мы можем улучшить в приложении Rejuvena.</p>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowRules(false)}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
+                >
+                  Понятно
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default PhotoDiaryPage;
