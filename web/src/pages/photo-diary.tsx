@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAppSelector } from '../store/hooks';
 import Head from 'next/head';
+import * as faceapi from 'face-api.js';
 
 interface PhotoSet {
   front: string | null;
@@ -40,6 +41,9 @@ const PhotoDiaryPage: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [showRules, setShowRules] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [cropError, setCropError] = useState<string | null>(null);
   
   const [data, setData] = useState<PhotoDiaryData>({
     before: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
@@ -61,29 +65,146 @@ const PhotoDiaryPage: React.FC = () => {
       router.push('/auth/login');
       return;
     }
-  }, [isAuthenticated, router]);
-
-  const handleFileUpload = async (type: 'before' | 'after', photoKey: keyof PhotoSet, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setData(prev => ({
-        ...prev,
-        [type]: { ...prev[type], [photoKey]: result }
-      }));
-      
-      if (photoKey === 'front') {
-        setTimeout(() => {
-          const mockAge = Math.floor(Math.random() * 10) + 30;
-          if (type === 'before') {
-            setData(prev => ({ ...prev, botAgeBefore: mockAge }));
-          } else {
-            setData(prev => ({ ...prev, botAgeAfter: mockAge }));
-          }
-        }, 1000);
+    
+    // Загрузка моделей face-api.js
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/rejuvena/models';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        setModelsLoaded(true);
+        console.log('✅ Face-api models loaded');
+      } catch (error) {
+        console.error('❌ Failed to load face-api models:', error);
       }
     };
-    reader.readAsDataURL(file);
+    
+    loadModels();
+  }, [isAuthenticated, router]);
+
+  const cropFaceImage = async (imageDataUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          // Детекция лица
+          const detection = await faceapi.detectSingleFace(
+            img,
+            new faceapi.TinyFaceDetectorOptions()
+          ).withFaceLandmarks();
+
+          if (!detection) {
+            reject(new Error('Лицо не найдено на фотографии'));
+            return;
+          }
+
+          const { box } = detection.detection;
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+
+          // Расчет кропа с учетом отступов
+          const topPadding = 0.05; // 5% сверху
+          const bottomPadding = 0.15; // 15% снизу
+          
+          // Высота области от верха лица до низа с отступами
+          const totalHeight = box.height / (1 - topPadding - bottomPadding);
+          const cropTop = box.y - (totalHeight * topPadding);
+          
+          // Квадратный кроп - берем размер по высоте
+          const cropSize = totalHeight;
+          
+          // Горизонтально - центрируем относительно лица
+          const faceCenterX = box.x + box.width / 2;
+          const cropLeft = faceCenterX - cropSize / 2;
+
+          // Установка размера canvas (квадрат)
+          canvas.width = cropSize;
+          canvas.height = cropSize;
+
+          // Отрисовка кропнутого изображения
+          ctx.drawImage(
+            img,
+            cropLeft, cropTop, cropSize, cropSize,
+            0, 0, cropSize, cropSize
+          );
+
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = () => reject(new Error('Ошибка загрузки изображения'));
+      img.src = imageDataUrl;
+    });
+  };
+
+  const handleFileUpload = async (type: 'before' | 'after', photoKey: keyof PhotoSet, file: File) => {
+    setCropError(null);
+    setProcessing(true);
+
+    try {
+      // Читаем файл
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const result = e.target?.result as string;
+
+        // Для closeup (6й кадр) - без автокропа
+        if (photoKey === 'closeup') {
+          setData(prev => ({
+            ...prev,
+            [type]: { ...prev[type], [photoKey]: result }
+          }));
+          setProcessing(false);
+          return;
+        }
+
+        // Автокроп для остальных кадров
+        if (!modelsLoaded) {
+          setCropError('Модели распознавания лиц еще загружаются. Попробуйте через несколько секунд.');
+          setProcessing(false);
+          return;
+        }
+
+        try {
+          const croppedImage = await cropFaceImage(result);
+          
+          setData(prev => ({
+            ...prev,
+            [type]: { ...prev[type], [photoKey]: croppedImage }
+          }));
+
+          // Определение возраста для фронтального фото
+          if (photoKey === 'front') {
+            setTimeout(() => {
+              const mockAge = Math.floor(Math.random() * 10) + 30;
+              if (type === 'before') {
+                setData(prev => ({ ...prev, botAgeBefore: mockAge }));
+              } else {
+                setData(prev => ({ ...prev, botAgeAfter: mockAge }));
+              }
+            }, 1000);
+          }
+
+          setProcessing(false);
+        } catch (error: any) {
+          console.error('Crop error:', error);
+          setCropError(error.message || 'Не удалось обработать фото');
+          
+          // Предлагаем загрузить без кропа
+          if (confirm('Не удалось автоматически обрезать фото. Загрузить как есть?')) {
+            setData(prev => ({
+              ...prev,
+              [type]: { ...prev[type], [photoKey]: result }
+            }));
+          }
+          setProcessing(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File upload error:', error);
+      setProcessing(false);
+    }
   };
 
   const handleDownloadCollage = () => {
@@ -193,11 +314,25 @@ const PhotoDiaryPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Processing/Error Messages */}
+          {processing && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+              <span className="text-blue-800">Обработка фото...</span>
+            </div>
+          )}
+          
+          {cropError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-800">{cropError}</p>
+            </div>
+          )}
+
           <div className="space-y-4">
             {photoTypes.map((photoType) => (
               <div key={photoType.id} className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col items-center">
-                  <div className="w-full aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 mb-2">
+                  <div className="w-full aspect-square bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 mb-2">
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                       <span className="text-gray-400 text-sm">Пример</span>
                     </div>
@@ -208,7 +343,7 @@ const PhotoDiaryPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
+                  <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
                     {data.before[photoType.id] ? (
                       <img src={data.before[photoType.id]!} alt="До" className="w-full h-full object-cover" />
                     ) : (
@@ -217,19 +352,22 @@ const PhotoDiaryPage: React.FC = () => {
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          disabled={processing}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleFileUpload('before', photoType.id, file);
                           }}
                         />
-                        <span className="text-blue-600 font-medium">загрузить</span>
+                        <span className="text-blue-600 font-medium">
+                          {processing ? 'Обработка...' : 'загрузить'}
+                        </span>
                       </label>
                     )}
                   </div>
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
+                  <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative">
                     {data.after[photoType.id] ? (
                       <img src={data.after[photoType.id]!} alt="После" className="w-full h-full object-cover" />
                     ) : (
@@ -238,12 +376,15 @@ const PhotoDiaryPage: React.FC = () => {
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          disabled={processing}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleFileUpload('after', photoType.id, file);
                           }}
                         />
-                        <span className="text-blue-600 font-medium">загрузить</span>
+                        <span className="text-blue-600 font-medium">
+                          {processing ? 'Обработка...' : 'загрузить'}
+                        </span>
                       </label>
                     )}
                   </div>
