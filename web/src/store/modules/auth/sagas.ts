@@ -34,7 +34,7 @@ interface ResetPasswordPayload {
   email: string;
 }
 
-function* loginWithEmailSaga(action: PayloadAction<LoginPayload>) {
+function* loginWithEmailSaga(action: PayloadAction<LoginPayload>): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
@@ -61,7 +61,7 @@ function* loginWithEmailSaga(action: PayloadAction<LoginPayload>) {
   }
 }
 
-function* signupWithEmailSaga(action: PayloadAction<SignupPayload>) {
+function* signupWithEmailSaga(action: PayloadAction<SignupPayload>): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
@@ -82,7 +82,7 @@ function* signupWithEmailSaga(action: PayloadAction<SignupPayload>) {
   }
 }
 
-function* sendResetPasswordRequestSaga(action: PayloadAction<ResetPasswordPayload>) {
+function* sendResetPasswordRequestSaga(action: PayloadAction<ResetPasswordPayload>): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
@@ -100,7 +100,7 @@ function* sendResetPasswordRequestSaga(action: PayloadAction<ResetPasswordPayloa
   }
 }
 
-function* signInWithGoogleSaga() {
+function* signInWithGoogleSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
@@ -116,7 +116,7 @@ function* signInWithGoogleSaga() {
   }
 }
 
-function* signInWithFacebookSaga() {
+function* signInWithFacebookSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
@@ -132,7 +132,7 @@ function* signInWithFacebookSaga() {
   }
 }
 
-function* guestUserLoginSaga() {
+function* guestUserLoginSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     yield put(setError(null));
