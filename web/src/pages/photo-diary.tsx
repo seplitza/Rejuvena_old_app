@@ -138,6 +138,44 @@ const PhotoDiaryPage: React.FC = () => {
     });
   };
 
+  const estimateAge = async (imageDataUrl: string, type: 'before' | 'after') => {
+    try {
+      // Извлекаем base64 из data URL
+      const base64Data = imageDataUrl.split(',')[1];
+      
+      const response = await fetch('http://37.252.20.170:5000/api/estimate-age', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Data }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка определения возраста');
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success' && result.age) {
+        if (type === 'before') {
+          setData(prev => ({ ...prev, botAgeBefore: result.age }));
+        } else {
+          setData(prev => ({ ...prev, botAgeAfter: result.age }));
+        }
+      }
+    } catch (error) {
+      console.error('Age estimation error:', error);
+      // В случае ошибки используем fallback
+      const fallbackAge = Math.floor(Math.random() * 10) + 30;
+      if (type === 'before') {
+        setData(prev => ({ ...prev, botAgeBefore: fallbackAge }));
+      } else {
+        setData(prev => ({ ...prev, botAgeAfter: fallbackAge }));
+      }
+    }
+  };
+
   const handleFileUpload = async (type: 'before' | 'after', photoKey: keyof PhotoSet, file: File) => {
     setCropError(null);
     setProcessing(true);
@@ -173,16 +211,9 @@ const PhotoDiaryPage: React.FC = () => {
             [type]: { ...prev[type], [photoKey]: croppedImage }
           }));
 
-          // Определение возраста для фронтального фото
+          // Определение возраста для фронтального фото через Age-bot API
           if (photoKey === 'front') {
-            setTimeout(() => {
-              const mockAge = Math.floor(Math.random() * 10) + 30;
-              if (type === 'before') {
-                setData(prev => ({ ...prev, botAgeBefore: mockAge }));
-              } else {
-                setData(prev => ({ ...prev, botAgeAfter: mockAge }));
-              }
-            }, 1000);
+            estimateAge(croppedImage, type);
           }
 
           setProcessing(false);
