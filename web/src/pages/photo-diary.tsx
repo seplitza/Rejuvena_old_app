@@ -213,10 +213,9 @@ const PhotoDiaryPage: React.FC = () => {
           }));
 
           // Определение возраста для фронтального фото через Age-bot API
-          // Отправляем ПОЛНОЕ фото (result), а не обрезанное (croppedImage)
-          // InsightFace сам найдет и обработает лицо
+          // Отправляем КРОПНУТОЕ фото с 30% padding - InsightFace видит всё лицо
           if (photoKey === 'front') {
-            estimateAge(result, type);
+            estimateAge(croppedImage, type);
           }
 
           setProcessing(false);
