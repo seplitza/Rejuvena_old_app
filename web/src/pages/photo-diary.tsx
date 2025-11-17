@@ -166,8 +166,8 @@ const PhotoDiaryPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Age estimation error:', error);
-      // В случае ошибки используем fallback
-      const fallbackAge = Math.floor(Math.random() * 10) + 30;
+      // В случае ошибки используем fallback (130-140 для определения что это не реальная оценка)
+      const fallbackAge = Math.floor(Math.random() * 11) + 130;
       if (type === 'before') {
         setData(prev => ({ ...prev, botAgeBefore: fallbackAge }));
       } else {
