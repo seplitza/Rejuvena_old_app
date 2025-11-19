@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAppSelector } from '../store/hooks';
 import Head from 'next/head';
 import * as faceapi from 'face-api.js';
+import UserAccessStatus from '@/components/user-access-status';
 
 interface PhotoSet {
   front: string | null;
@@ -155,6 +156,34 @@ const PhotoDiaryPage: React.FC = () => {
   const saveOriginalToServer = async (imageDataUrl: string, type: 'before' | 'after', photoKey: keyof PhotoSet) => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping server upload');
+      return;
+    }
+    
+    // Проверяем нужны ли полные данные для сохранения на сервере (1 месяц бесплатно)
+    const needsFullAccess = (user as any)?.needsFullAccess;
+    const hasStoredPhotos = Object.values(photoMetadata.before).length > 0 || Object.values(photoMetadata.after).length > 0;
+    
+    // Показываем запрос только один раз при первом сохранении
+    if (needsFullAccess && !hasStoredPhotos) {
+      const confirmed = confirm(
+        '💾 Хотите сохранить оригиналы фото на сервере?\n\n' +
+        '✅ Бесплатное хранение 1 месяц\n' +
+        '✅ Возможность скачать коллаж\n' +
+        '✅ Восстановление при потере данных\n\n' +
+        'Для этого нужны ваши данные Telegram:\n' +
+        '• Имя и фамилия\n' +
+        '• Username\n\n' +
+        'Разрешить доступ и сохранить фото?'
+      );
+      
+      if (!confirmed) {
+        console.log('⚠️ User declined server storage');
+        return;
+      }
+      
+      // Перенаправляем на страницу запроса полного доступа
+      alert('Сейчас откроется страница для предоставления доступа. После предоставления доступа загрузите фото снова.');
+      window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user.id}`, '_blank');
       return;
     }
     
@@ -796,6 +825,32 @@ const PhotoDiaryPage: React.FC = () => {
     try {
       setProcessing(true);
       
+      // Проверяем нужны ли полные данные пользователя
+      const needsFullAccess = (user as any)?.needsFullAccess;
+      if (needsFullAccess) {
+        const confirmed = confirm(
+          '📱 Для скачивания коллажа нам нужны ваши данные Telegram:\n' +
+          '• Имя и фамилия\n' +
+          '• Username\n\n' +
+          'Это позволит:\n' +
+          '✅ Сохранить фото на сервере на 1 месяц бесплатно\n' +
+          '✅ Персонализировать коллаж\n\n' +
+          'Разрешить доступ к данным?'
+        );
+        
+        if (!confirmed) {
+          setProcessing(false);
+          return;
+        }
+        
+        // Перенаправляем на страницу запроса полного доступа
+        alert('Сейчас откроется страница для предоставления доступа к вашим данным Telegram');
+        // TODO: открыть Telegram бота или специальную страницу
+        window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user?.id}`, '_blank');
+        setProcessing(false);
+        return;
+      }
+      
       // Собираем только загруженные ряды (хотя бы 1 фото в ряду)
       const photoTypesOrder: (keyof PhotoSet)[] = ['front', 'left34', 'leftProfile', 'right34', 'rightProfile', 'closeup'];
       
@@ -972,6 +1027,15 @@ const PhotoDiaryPage: React.FC = () => {
               <span className="text-2xl">❌</span>
             </div>
           </div>
+
+          {/* Статус доступа пользователя */}
+          <UserAccessStatus 
+            user={user} 
+            onRequestAccess={() => {
+              alert('Сейчас откроется страница для предоставления полного доступа');
+              window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user?.id}`, '_blank');
+            }}
+          />
 
           {/* Якорь на условия хранения */}
           <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">

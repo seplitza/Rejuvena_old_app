@@ -72,27 +72,29 @@ export default function TestUserPage() {
       }
     }
 
-    // 2. Проверяем URL параметры (для ручного тестирования)
+    // 2. Проверяем URL параметры (Deep Link от бота или внешних источников)
     const urlParams = new URLSearchParams(window.location.search);
-    const tgId = urlParams.get('tg_id');
+    const tgUserId = urlParams.get('tg_user_id') || urlParams.get('tg_id');
     const tgUsername = urlParams.get('tg_username');
-    const tgFirstName = urlParams.get('tg_first_name');
-    const tgLastName = urlParams.get('tg_last_name');
+    const tgFirstName = urlParams.get('tg_first_name') || urlParams.get('first_name');
+    const tgLastName = urlParams.get('tg_last_name') || urlParams.get('last_name');
 
-    if (tgId) {
+    if (tgUserId) {
       const user = {
-        id: `tg-${tgId}`,
-        email: tgUsername ? `${tgUsername}@telegram.user` : `user${tgId}@telegram.user`,
-        name: `${tgFirstName || 'User'}${tgLastName ? ' ' + tgLastName : ''}`,
-        firstName: tgFirstName || 'User',
+        id: `tg-${tgUserId}`,
+        email: tgUsername ? `${tgUsername}@telegram.user` : `user${tgUserId}@telegram.user`,
+        name: `${tgFirstName || 'Пользователь'}${tgLastName ? ' ' + tgLastName : ''}`,
+        firstName: tgFirstName || 'Пользователь',
         lastName: tgLastName || '',
         username: tgUsername || '',
-        telegramId: parseInt(tgId),
+        telegramId: parseInt(tgUserId),
+        // Флаг что данные неполные (нужно будет запросить разрешение)
+        needsFullAccess: !tgFirstName || !tgUsername,
       };
       
       setDetectedUser(user);
       setUserSource('manual');
-      console.log('✅ Создан пользователь из URL параметров:', user);
+      console.log('✅ Создан пользователь из URL параметров (Deep Link):', user);
       return;
     }
 
@@ -145,8 +147,14 @@ export default function TestUserPage() {
 
   // Автоматическое создание при загрузке
   useEffect(() => {
-    if (detectedUser && router.query.auto === 'true') {
-      createUser(detectedUser);
+    // Автоматически создаем пользователя если:
+    // 1. Это Telegram пользователь (всегда автоматически)
+    // 2. Или передан параметр auto=true
+    if (detectedUser && (userSource === 'telegram' || router.query.auto === 'true')) {
+      // Небольшая задержка для UX
+      setTimeout(() => {
+        createUser(detectedUser);
+      }, 500);
     }
   }, [detectedUser, router.query]);
 
