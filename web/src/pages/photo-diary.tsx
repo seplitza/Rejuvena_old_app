@@ -842,15 +842,19 @@ const PhotoDiaryPage: React.FC = () => {
       const result = await response.json();
       
       if (result.success && result.collage) {
-        // Скачиваем коллаж
+        // Скачиваем коллаж с уникальным именем (как в заголовке)
+        const username = user?.email?.split('@')[0] || user?.name || 'Пользователь';
+        const downloadDate = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+        const filename = `Фотодневник_${username}_${downloadDate}.jpg`;
+        
         const link = document.createElement('a');
         link.href = result.collage;
-        link.download = `rejuvena-collage-${Date.now()}.jpg`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        console.log('✅ Collage downloaded');
+        console.log('✅ Collage downloaded:', filename);
       } else {
         throw new Error('Не удалось создать коллаж');
       }
