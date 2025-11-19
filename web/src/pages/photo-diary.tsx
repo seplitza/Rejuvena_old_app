@@ -641,8 +641,8 @@ const PhotoDiaryPage: React.FC = () => {
         // Конвертируем в base64 с качеством 95% (высокое качество для сервера)
         const croppedHighQuality = cropCanvas.toDataURL('image/jpeg', 0.95);
         
-        // Создаём уменьшенную версию для отображения (максимум 800x800px)
-        const maxDisplaySize = 800;
+        // Создаём уменьшенную версию для отображения (максимум 400x400px под размер окошка)
+        const maxDisplaySize = 400;
         const scale = Math.min(1, maxDisplaySize / Math.max(cropArea.width, cropArea.height));
         const displayWidth = Math.round(cropArea.width * scale);
         const displayHeight = Math.round(cropArea.height * scale);
