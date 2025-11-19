@@ -220,7 +220,7 @@ const PhotoDiaryPage: React.FC = () => {
           timestamp: Date.now()
         };
         localStorage.setItem(originalsKey, JSON.stringify(originalsData));
-        console.log('💾 Photo diary auto-saved (60% display + 75% originals for 24h)');
+        console.log('💾 Photo diary auto-saved (60% display + 50% originals for 24h)');
       } catch (error: any) {
         if (error.name === 'QuotaExceededError') {
           console.error('❌ LocalStorage quota exceeded! Clearing old data...');
@@ -246,6 +246,18 @@ const PhotoDiaryPage: React.FC = () => {
     if (user?.id && !isDataLoadedRef.current) {
       const storageKey = `photo_diary_${user.id}`;
       const originalsKey = `photo_diary_originals_${user.id}`;
+      const versionKey = `photo_diary_version_${user.id}`;
+      const CURRENT_VERSION = '2.0'; // Версия с server-side originals
+      
+      // Проверяем версию данных
+      const savedVersion = localStorage.getItem(versionKey);
+      if (savedVersion !== CURRENT_VERSION) {
+        console.log(`🔄 Data version mismatch (${savedVersion} !== ${CURRENT_VERSION}), clearing old data...`);
+        localStorage.removeItem(storageKey);
+        localStorage.removeItem(originalsKey);
+        localStorage.setItem(versionKey, CURRENT_VERSION);
+      }
+      
       const savedData = localStorage.getItem(storageKey);
       console.log(`🔍 Looking for saved data with key: ${storageKey}`);
       if (savedData) {
