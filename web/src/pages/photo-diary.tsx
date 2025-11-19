@@ -615,27 +615,54 @@ const PhotoDiaryPage: React.FC = () => {
       img.onload = async () => {
         // Вычисляем соотношение между preview и оригинальным размером
         // Preview сжат до 50%, но размеры пропорциональны
-        const previewWidth = img.width;
-        const previewHeight = img.height;
+        const previewWidth = img.naturalWidth;  // Реальная ширина изображения
+        const previewHeight = img.naturalHeight; // Реальная высота изображения
+        
+        // ВАЖНО: cropArea содержит координаты относительно отображаемого размера в браузере
+        // Нужно найти элемент img в модальном окне чтобы узнать displayed размер
+        const modalImg = document.querySelector('.crop-modal-image') as HTMLImageElement;
+        if (!modalImg) {
+          console.error('❌ Modal image not found');
+          return;
+        }
+        
+        const displayedWidth = modalImg.width;   // Размер на экране
+        const displayedHeight = modalImg.height;
+        
+        // Вычисляем масштаб между displayed и actual размерами
+        const scaleX = previewWidth / displayedWidth;
+        const scaleY = previewHeight / displayedHeight;
+        
+        // Пересчитываем координаты обрезки в реальные пиксели изображения
+        const actualCropX = Math.round(cropArea.x * scaleX);
+        const actualCropY = Math.round(cropArea.y * scaleY);
+        const actualCropWidth = Math.round(cropArea.width * scaleX);
+        const actualCropHeight = Math.round(cropArea.height * scaleY);
+        
+        console.log(`🔍 Crop coordinates:
+          Display: (${cropArea.x}, ${cropArea.y}) ${cropArea.width}x${cropArea.height}
+          Image: ${displayedWidth}x${displayedHeight} → ${previewWidth}x${previewHeight}
+          Scale: ${scaleX.toFixed(2)}x, ${scaleY.toFixed(2)}x
+          Actual: (${actualCropX}, ${actualCropY}) ${actualCropWidth}x${actualCropHeight}`);
         
         // Создаём canvas для обрезанного изображения из preview
         const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = cropArea.width;
-        cropCanvas.height = cropArea.height;
+        cropCanvas.width = actualCropWidth;
+        cropCanvas.height = actualCropHeight;
         const cropCtx = cropCanvas.getContext('2d');
         if (!cropCtx) return;
 
-        // Вырезаем область из preview
+        // Вырезаем область из preview используя РЕАЛЬНЫЕ координаты
         cropCtx.drawImage(
           img,
-          cropArea.x,
-          cropArea.y,
-          cropArea.width,
-          cropArea.height,
+          actualCropX,
+          actualCropY,
+          actualCropWidth,
+          actualCropHeight,
           0,
           0,
-          cropArea.width,
-          cropArea.height
+          actualCropWidth,
+          actualCropHeight
         );
 
         // Конвертируем в base64 с качеством 95% (высокое качество для сервера)
@@ -643,9 +670,9 @@ const PhotoDiaryPage: React.FC = () => {
         
         // Создаём уменьшенную версию для отображения (максимум 400x400px под размер окошка)
         const maxDisplaySize = 400;
-        const scale = Math.min(1, maxDisplaySize / Math.max(cropArea.width, cropArea.height));
-        const displayWidth = Math.round(cropArea.width * scale);
-        const displayHeight = Math.round(cropArea.height * scale);
+        const scale = Math.min(1, maxDisplaySize / Math.max(actualCropWidth, actualCropHeight));
+        const displayWidth = Math.round(actualCropWidth * scale);
+        const displayHeight = Math.round(actualCropHeight * scale);
         
         const displayCanvas = document.createElement('canvas');
         displayCanvas.width = displayWidth;
@@ -1175,7 +1202,7 @@ const PhotoDiaryPage: React.FC = () => {
                   <img
                     src={cropImage.dataUrl}
                     alt="Crop preview"
-                    className="border-2 border-gray-300"
+                    className="border-2 border-gray-300 crop-modal-image"
                     style={{ 
                       display: 'block',
                       maxWidth: '85vw',
