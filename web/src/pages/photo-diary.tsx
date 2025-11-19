@@ -899,25 +899,27 @@ const PhotoDiaryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Правила хранения фотографий */}
+          {/* Якорь на условия хранения */}
           <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mr-3">
-                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <button
+              onClick={() => {
+                const element = document.getElementById('storage-policy');
+                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              className="w-full flex items-center justify-between hover:bg-blue-100 transition-colors rounded p-2"
+            >
+              <div className="flex items-center">
+                <div className="flex-shrink-0 mr-3">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="font-bold text-base text-blue-800">Условия хранения фотографий</p>
               </div>
-              <div className="flex-1 text-sm text-blue-800 space-y-2">
-                <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для preview в окне корректировки обрезки</li>
-                  <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки и использования в рекламе</li>
-                  <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
-                  <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
-                  <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
-                </ul>
-              </div>
-            </div>
+              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -1141,6 +1143,27 @@ const PhotoDiaryPage: React.FC = () => {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               Фотографии автоматически сохраняются
+            </div>
+          </div>
+
+          {/* Подробные условия хранения фотографий */}
+          <div id="storage-policy" className="mt-8 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mr-3">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 text-sm text-blue-800 space-y-2">
+                <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для preview в окне корректировки обрезки</li>
+                  <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки и использования в рекламе</li>
+                  <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
+                  <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
+                  <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
+                </ul>
+              </div>
             </div>
           </div>
         </main>
