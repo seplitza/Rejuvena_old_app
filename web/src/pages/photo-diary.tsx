@@ -304,12 +304,40 @@ const PhotoDiaryPage: React.FC = () => {
       
       // ВОССТАНОВЛЕНИЕ: если display photos отсутствуют, но originals есть - восстанавливаем!
       if (loadedOriginals) {
+        console.log('🔍 Recovery check:', {
+          hasLoadedData: !!loadedData,
+          originalsStructure: {
+            hasBefore: !!loadedOriginals.before,
+            hasAfter: !!loadedOriginals.after,
+            beforeKeys: loadedOriginals.before ? Object.keys(loadedOriginals.before) : [],
+            afterKeys: loadedOriginals.after ? Object.keys(loadedOriginals.after) : []
+          }
+        });
+        
         if (!loadedData) {
           // Display photos полностью пусты, но originals есть - создаём новую структуру
           console.log('♻️ No display photos found, restoring ALL from originals backup!');
+          
+          const beforePhotos = loadedOriginals.before || {};
+          const afterPhotos = loadedOriginals.after || {};
+          
           loadedData = {
-            before: { ...loadedOriginals.before },
-            after: { ...loadedOriginals.after },
+            before: {
+              front: beforePhotos.front || null,
+              left34: beforePhotos.left34 || null,
+              leftProfile: beforePhotos.leftProfile || null,
+              right34: beforePhotos.right34 || null,
+              rightProfile: beforePhotos.rightProfile || null,
+              closeup: beforePhotos.closeup || null,
+            },
+            after: {
+              front: afterPhotos.front || null,
+              left34: afterPhotos.left34 || null,
+              leftProfile: afterPhotos.leftProfile || null,
+              right34: afterPhotos.right34 || null,
+              rightProfile: afterPhotos.rightProfile || null,
+              closeup: afterPhotos.closeup || null,
+            },
             botAgeBefore: null,
             botAgeAfter: null,
             realAgeBefore: null,
@@ -321,6 +349,11 @@ const PhotoDiaryPage: React.FC = () => {
             commentBefore: '',
             commentAfter: '',
           };
+          
+          console.log('♻️ Restored data:', {
+            hasBefore: !!loadedData.before.front,
+            hasAfter: !!loadedData.after.front
+          });
         } else {
           // Display photos частично есть - восстанавливаем недостающие
           let recovered = false;
