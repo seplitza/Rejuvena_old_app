@@ -46,6 +46,17 @@ const PhotoDiaryPage: React.FC = () => {
   const [cropError, setCropError] = useState<string | null>(null);
   const isDataLoadedRef = useRef(false); // Синхронный флаг что данные загружены
   
+  // State для ручной обрезки
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImage, setCropImage] = useState<{
+    dataUrl: string;
+    period: 'before' | 'after';
+    photoType: keyof PhotoSet;
+  } | null>(null);
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 300, height: 300 });
+  const [zoom, setZoom] = useState(1);
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
+  
   const [data, setData] = useState<PhotoDiaryData>({
     before: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
     after: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
@@ -409,6 +420,73 @@ const PhotoDiaryPage: React.FC = () => {
     }
   };
 
+  // Открыть модальное окно ручной обрезки
+  const openCropModal = (period: 'before' | 'after', photoType: keyof PhotoSet) => {
+    const photoData = data[period][photoType];
+    if (photoData) {
+      setCropImage({ dataUrl: photoData, period, photoType });
+      setShowCropModal(true);
+      // Сбрасываем параметры обрезки
+      setCropArea({ x: 50, y: 50, width: 300, height: 300 });
+      setZoom(1);
+    }
+  };
+
+  // Применить ручную обрезку
+  const handleApplyCrop = () => {
+    if (!cropImage || !cropCanvasRef.current) return;
+
+    try {
+      const canvas = cropCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const img = new Image();
+      img.onload = () => {
+        // Создаём canvas для обрезанного изображения
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropArea.width;
+        cropCanvas.height = cropArea.height;
+        const cropCtx = cropCanvas.getContext('2d');
+        if (!cropCtx) return;
+
+        // Вырезаем область с учётом масштаба
+        const scaleFactor = img.width / canvas.width;
+        cropCtx.drawImage(
+          img,
+          cropArea.x * scaleFactor,
+          cropArea.y * scaleFactor,
+          cropArea.width * scaleFactor,
+          cropArea.height * scaleFactor,
+          0,
+          0,
+          cropArea.width,
+          cropArea.height
+        );
+
+        // Конвертируем в base64 с качеством 95%
+        const croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
+
+        // Обновляем данные
+        setData(prev => ({
+          ...prev,
+          [cropImage.period]: {
+            ...prev[cropImage.period],
+            [cropImage.photoType]: croppedDataUrl
+          }
+        }));
+
+        // Закрываем модальное окно
+        setShowCropModal(false);
+        setCropImage(null);
+      };
+      img.src = cropImage.dataUrl;
+    } catch (error) {
+      console.error('Crop failed:', error);
+      alert('Не удалось обрезать изображение');
+    }
+  };
+
   const handleDownloadCollage = async () => {
     try {
       setProcessing(true);
@@ -569,6 +647,26 @@ const PhotoDiaryPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Правила хранения фотографий */}
+          <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mr-3">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 text-sm text-blue-800 space-y-2">
+                <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><span className="font-semibold">В браузере:</span> фотографии автоматически сохраняются локально и доступны в течение 24 часов</li>
+                  <li><span className="font-semibold">На сервере (бесплатно):</span> 1 месяц с момента загрузки</li>
+                  <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
+                  <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
               <h3 className="text-lg font-bold text-blue-800">Пример</h3>
@@ -612,24 +710,31 @@ const PhotoDiaryPage: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative group">
                     {data.before[photoType.id] ? (
-                      <label className="w-full h-full cursor-pointer relative block">
+                      <div className="w-full h-full relative">
                         <img src={data.before[photoType.id]!} alt="До" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                          <span className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex flex-col items-center justify-center gap-2">
+                          <label className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer hover:underline">
                             Изменить
-                          </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={processing}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload('before', photoType.id, file);
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={() => openCropModal('before', photoType.id)}
+                            className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:underline"
+                            disabled={processing}
+                          >
+                            Корректировать
+                          </button>
                         </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={processing}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload('before', photoType.id, file);
-                          }}
-                        />
-                      </label>
+                      </div>
                     ) : (
                       <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
                         <input
@@ -653,24 +758,31 @@ const PhotoDiaryPage: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300 mb-2 relative group">
                     {data.after[photoType.id] ? (
-                      <label className="w-full h-full cursor-pointer relative block">
+                      <div className="w-full h-full relative">
                         <img src={data.after[photoType.id]!} alt="После" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                          <span className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex flex-col items-center justify-center gap-2">
+                          <label className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer hover:underline">
                             Изменить
-                          </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={processing}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload('after', photoType.id, file);
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={() => openCropModal('after', photoType.id)}
+                            className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:underline"
+                            disabled={processing}
+                          >
+                            Корректировать
+                          </button>
                         </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={processing}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload('after', photoType.id, file);
-                          }}
-                        />
-                      </label>
+                      </div>
                     ) : (
                       <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
                         <input
@@ -807,6 +919,141 @@ const PhotoDiaryPage: React.FC = () => {
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
                 >
                   Понятно
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Модальное окно ручной обрезки */}
+        {showCropModal && cropImage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-blue-800">Корректировать обрезку</h2>
+                <button
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setCropImage(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <div className="relative inline-block">
+                  <canvas
+                    ref={cropCanvasRef}
+                    className="max-w-full border-2 border-gray-300"
+                    style={{
+                      backgroundImage: `url(${cropImage.dataUrl})`,
+                      backgroundSize: `${zoom * 100}% auto`,
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      width: '600px',
+                      height: '600px'
+                    }}
+                  />
+                  {/* Область обрезки */}
+                  <div
+                    className="absolute border-4 border-blue-500 cursor-move"
+                    style={{
+                      left: `${cropArea.x}px`,
+                      top: `${cropArea.y}px`,
+                      width: `${cropArea.width}px`,
+                      height: `${cropArea.height}px`,
+                      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                    }}
+                    onMouseDown={(e) => {
+                      const startX = e.clientX - cropArea.x;
+                      const startY = e.clientY - cropArea.y;
+                      
+                      const handleMove = (e: MouseEvent) => {
+                        const newX = Math.max(0, Math.min(600 - cropArea.width, e.clientX - startX));
+                        const newY = Math.max(0, Math.min(600 - cropArea.height, e.clientY - startY));
+                        setCropArea(prev => ({ ...prev, x: newX, y: newY }));
+                      };
+                      
+                      const handleUp = () => {
+                        document.removeEventListener('mousemove', handleMove);
+                        document.removeEventListener('mouseup', handleUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMove);
+                      document.addEventListener('mouseup', handleUp);
+                    }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center text-white text-sm">
+                      Перетащите
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Управление */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Масштаб: {zoom.toFixed(1)}x
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                    value={zoom}
+                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Размер области: {cropArea.width}px
+                    </label>
+                    <input
+                      type="range"
+                      min="100"
+                      max="500"
+                      step="10"
+                      value={cropArea.width}
+                      onChange={(e) => {
+                        const newSize = parseInt(e.target.value);
+                        setCropArea(prev => ({
+                          ...prev,
+                          width: newSize,
+                          height: newSize,
+                          x: Math.min(prev.x, 600 - newSize),
+                          y: Math.min(prev.y, 600 - newSize)
+                        }));
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Кнопки */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setCropImage(null);
+                  }}
+                  className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleApplyCrop}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
+                >
+                  Сохранить
                 </button>
               </div>
             </div>
