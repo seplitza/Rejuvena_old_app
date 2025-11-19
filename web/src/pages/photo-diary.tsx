@@ -72,7 +72,7 @@ const PhotoDiaryPage: React.FC = () => {
     commentAfter: '',
   });
 
-  // Оригинальные фото (необрезанные) для возможности корректировки в течение 24 часов
+  // Оригинальные фото (необрезанные) - хранятся ТОЛЬКО в памяти текущей сессии
   const [originalPhotos, setOriginalPhotos] = useState<{
     before: PhotoSet;
     after: PhotoSet;
@@ -80,9 +80,18 @@ const PhotoDiaryPage: React.FC = () => {
     before: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
     after: { front: null, left34: null, leftProfile: null, right34: null, rightProfile: null, closeup: null },
   });
+  
+  // Координаты обрезки для восстановления из оригиналов с сервера
+  const [cropCoordinates, setCropCoordinates] = useState<{
+    before: { [K in keyof PhotoSet]?: { x: number; y: number; width: number; height: number } };
+    after: { [K in keyof PhotoSet]?: { x: number; y: number; width: number; height: number } };
+  }>({
+    before: {},
+    after: {},
+  });
 
   // Функция сжатия изображения для localStorage
-  const compressImageForStorage = (dataUrl: string | null, quality: number = 0.6): string | null => {
+  const compressImageForStorage = (dataUrl: string | null, quality: number = 0.4): string | null => {
     if (!dataUrl) return null;
     
     try {
@@ -172,7 +181,7 @@ const PhotoDiaryPage: React.FC = () => {
     // НЕ сохраняем пока данные не загружены из localStorage
     if (isAuthenticated && user?.id && isDataLoadedRef.current) {
       const storageKey = `photo_diary_${user.id}`;
-      const originalsKey = `photo_diary_originals_${user.id}`;
+      const cropCoordsKey = `photo_diary_crop_coords_${user.id}`;
       try {
         // Создаём копию данных со сжатыми изображениями для localStorage
         const compressedData = {
@@ -197,23 +206,21 @@ const PhotoDiaryPage: React.FC = () => {
         
         localStorage.setItem(storageKey, JSON.stringify(compressedData));
         
-        // НЕ сохраняем originals в localStorage - они слишком большие и вызывают QuotaExceededError
-        // Вместо этого originals хранятся только в памяти (state) для текущей сессии
-        // В будущем они будут отправляться на сервер через /api/save-original
-        console.log('💾 Photo diary auto-saved (display photos only, 60% quality)');
+        // Сохраняем координаты обрезки (очень маленький размер!)
+        localStorage.setItem(cropCoordsKey, JSON.stringify(cropCoordinates));
+        
+        console.log('💾 Photo diary auto-saved (40% quality display + crop coords)');
       } catch (error: any) {
         if (error.name === 'QuotaExceededError') {
           console.error('❌ LocalStorage quota exceeded! Clearing display photos...');
-          // Очищаем только display photos (originals теперь не сохраняются)
           localStorage.removeItem(storageKey);
           console.log('🗑️ Cleared display photos storage');
-          // Не показываем alert каждый раз - это раздражает при автосохранении
         } else {
           console.error('❌ LocalStorage save error:', error);
         }
       }
     }
-  }, [data, originalPhotos, isAuthenticated, user]);
+  }, [data, cropCoordinates, isAuthenticated, user]);
 
   // Проверка авторизации (только redirect)
   useEffect(() => {
@@ -259,15 +266,29 @@ const PhotoDiaryPage: React.FC = () => {
         console.log('ℹ️ No saved data found in localStorage');
       }
       
-      // Originals больше НЕ сохраняются в localStorage (слишком большие)
-      // Они хранятся только в памяти (state) и при перезагрузке теряются
-      // В будущем будут загружаться с сервера через /api/load-original
+      // Загружаем координаты обрезки
+      const cropCoordsKey = `photo_diary_crop_coords_${user.id}`;
+      const savedCropCoords = localStorage.getItem(cropCoordsKey);
+      if (savedCropCoords) {
+        try {
+          const parsed = JSON.parse(savedCropCoords);
+          setCropCoordinates(parsed);
+          console.log('📐 Loaded crop coordinates from localStorage');
+        } catch (error) {
+          console.error('❌ Failed to load crop coordinates:', error);
+        }
+      }
       
       // Применяем загруженные данные
       if (loadedData) {
         setData(loadedData);
         console.log('📂 Restored display photos from localStorage');
       }
+      
+      // TODO: Загрузить оригиналы с сервера если есть crop coordinates
+      // if (savedCropCoords && Object.keys(parsed.before).length > 0) {
+      //   await loadOriginalsFromServer(user.id);
+      // }
       
       // Данные загружены (даже если было пусто) - СИНХРОННО
       isDataLoadedRef.current = true;
@@ -477,7 +498,7 @@ const PhotoDiaryPage: React.FC = () => {
         // Для профилей и closeup - сразу ручная обрезка
         if (photoKey === 'leftProfile' || photoKey === 'rightProfile' || photoKey === 'closeup') {
           // Сохраняем сжатый для отображения (60%)
-          const compressedForDisplay = compressImageForStorage(result, 0.6);
+          const compressedForDisplay = compressImageForStorage(result, 0.4);
           setData(prev => ({
             ...prev,
             [type]: { ...prev[type], [photoKey]: compressedForDisplay }
@@ -657,8 +678,8 @@ const PhotoDiaryPage: React.FC = () => {
         
         displayCtx.drawImage(cropCanvas, 0, 0, displayWidth, displayHeight);
         
-        // Сжимаем до 60% для отображения в сетке
-        const croppedDataUrl = displayCanvas.toDataURL('image/jpeg', 0.6);
+        // Сжимаем до 40% для отображения в сетке (экономия места)
+        const croppedDataUrl = displayCanvas.toDataURL('image/jpeg', 0.4);
 
         /* TODO: Реализовать на сервере endpoint /api/crop-original
         // Отправляем координаты на сервер для обрезки оригинала
@@ -698,13 +719,32 @@ const PhotoDiaryPage: React.FC = () => {
             [cropImage.photoType]: croppedDataUrl
           }
         }));
+        
+        // Сохраняем координаты обрезки для восстановления из оригинала с сервера
+        setCropCoordinates(prev => ({
+          ...prev,
+          [cropImage.period]: {
+            ...prev[cropImage.period],
+            [cropImage.photoType]: {
+              x: actualCropX,
+              y: actualCropY,
+              width: actualCropWidth,
+              height: actualCropHeight
+            }
+          }
+        }));
 
         // Закрываем модальное окно
         setShowCropModal(false);
         setCropImage(null);
         setProcessing(false);
         
-        console.log('✂️ Manual crop applied (from preview, server crop TODO)');
+        console.log('✂️ Manual crop applied & coordinates saved:', {
+          x: actualCropX,
+          y: actualCropY,
+          width: actualCropWidth,
+          height: actualCropHeight
+        });
       };
       img.src = cropImage.dataUrl;
     } catch (error) {
@@ -1132,7 +1172,7 @@ const PhotoDiaryPage: React.FC = () => {
               <div className="flex-1 text-sm text-blue-800 space-y-2">
                 <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li><span className="font-semibold">В браузере:</span> финальные фото (60% качество) хранятся до перезагрузки страницы. Оригиналы доступны только в текущей сессии для ре-обрезки</li>
+                  <li><span className="font-semibold">В браузере:</span> финальные фото (40% качество) + координаты обрезки. Оригиналы в текущей сессии для ре-обрезки</li>
                   <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки и использования в рекламе</li>
                   <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
                   <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
