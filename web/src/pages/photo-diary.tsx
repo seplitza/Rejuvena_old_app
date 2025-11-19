@@ -641,8 +641,22 @@ const PhotoDiaryPage: React.FC = () => {
         // Конвертируем в base64 с качеством 95% (высокое качество для сервера)
         const croppedHighQuality = cropCanvas.toDataURL('image/jpeg', 0.95);
         
+        // Создаём уменьшенную версию для отображения (максимум 800x800px)
+        const maxDisplaySize = 800;
+        const scale = Math.min(1, maxDisplaySize / Math.max(cropArea.width, cropArea.height));
+        const displayWidth = Math.round(cropArea.width * scale);
+        const displayHeight = Math.round(cropArea.height * scale);
+        
+        const displayCanvas = document.createElement('canvas');
+        displayCanvas.width = displayWidth;
+        displayCanvas.height = displayHeight;
+        const displayCtx = displayCanvas.getContext('2d');
+        if (!displayCtx) return;
+        
+        displayCtx.drawImage(cropCanvas, 0, 0, displayWidth, displayHeight);
+        
         // Сжимаем до 60% для отображения в сетке
-        const croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.6);
+        const croppedDataUrl = displayCanvas.toDataURL('image/jpeg', 0.6);
 
         /* TODO: Реализовать на сервере endpoint /api/crop-original
         // Отправляем координаты на сервер для обрезки оригинала
