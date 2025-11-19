@@ -249,17 +249,20 @@ const PhotoDiaryPage: React.FC = () => {
       const versionKey = `photo_diary_version_${user.id}`;
       const CURRENT_VERSION = '2.0'; // Версия с server-side originals
       
-      // Проверяем версию данных
+      // Проверяем версию данных (мягкая миграция - НЕ удаляем фото!)
       const savedVersion = localStorage.getItem(versionKey);
       if (savedVersion !== CURRENT_VERSION) {
-        console.log(`🔄 Data version mismatch (${savedVersion} !== ${CURRENT_VERSION}), clearing old data...`);
-        localStorage.removeItem(storageKey);
-        localStorage.removeItem(originalsKey);
+        console.log(`🔄 Data version update (${savedVersion} → ${CURRENT_VERSION}), migrating data...`);
+        // Не удаляем данные! Только обновляем версию
+        // В будущем здесь можно добавить логику миграции структуры данных
         localStorage.setItem(versionKey, CURRENT_VERSION);
       }
       
       const savedData = localStorage.getItem(storageKey);
       console.log(`🔍 Looking for saved data with key: ${storageKey}`);
+      
+      let loadedData = null;
+      
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
@@ -267,7 +270,7 @@ const PhotoDiaryPage: React.FC = () => {
             hasBefore: !!parsed.before?.front,
             hasAfter: !!parsed.after?.front
           });
-          setData(parsed);
+          loadedData = parsed;
         } catch (error) {
           console.error('❌ Failed to load saved data:', error);
         }
@@ -277,13 +280,15 @@ const PhotoDiaryPage: React.FC = () => {
       
       // Загружаем оригиналы (если им меньше 24 часов)
       const savedOriginals = localStorage.getItem(originalsKey);
+      let loadedOriginals = null;
+      
       if (savedOriginals) {
         try {
           const parsed = JSON.parse(savedOriginals);
           const age = Date.now() - parsed.timestamp;
           const hours = age / (1000 * 60 * 60);
           if (hours < 24) {
-            setOriginalPhotos(parsed.originalPhotos);
+            loadedOriginals = parsed.originalPhotos;
             console.log(`📂 Loaded original photos (age: ${hours.toFixed(1)}h)`);
           } else {
             console.log('⏰ Original photos expired (>24h), removing...');
@@ -292,6 +297,37 @@ const PhotoDiaryPage: React.FC = () => {
         } catch (error) {
           console.error('❌ Failed to load original photos:', error);
         }
+      }
+      
+      // ВОССТАНОВЛЕНИЕ: если display photos пустые, но originals есть - восстанавливаем!
+      if (loadedOriginals && loadedData) {
+        let recovered = false;
+        const newData = { ...loadedData };
+        
+        // Проверяем каждое фото before
+        (['front', 'left34', 'leftProfile', 'right34', 'rightProfile', 'closeup'] as const).forEach(photoType => {
+          if (!newData.before[photoType] && loadedOriginals.before[photoType]) {
+            newData.before[photoType] = loadedOriginals.before[photoType];
+            recovered = true;
+          }
+          if (!newData.after[photoType] && loadedOriginals.after[photoType]) {
+            newData.after[photoType] = loadedOriginals.after[photoType];
+            recovered = true;
+          }
+        });
+        
+        if (recovered) {
+          console.log('♻️ Recovered missing photos from originals backup!');
+          loadedData = newData;
+        }
+      }
+      
+      // Применяем загруженные данные
+      if (loadedData) {
+        setData(loadedData);
+      }
+      if (loadedOriginals) {
+        setOriginalPhotos(loadedOriginals);
       }
       
       // Данные загружены (даже если было пусто) - СИНХРОННО
