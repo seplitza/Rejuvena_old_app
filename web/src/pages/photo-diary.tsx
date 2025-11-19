@@ -394,7 +394,7 @@ const PhotoDiaryPage: React.FC = () => {
     }
   }, [modelsLoaded]);
 
-  const cropFaceImage = async (imageDataUrl: string): Promise<string> => {
+  const cropFaceImage = async (imageDataUrl: string, photoType?: keyof PhotoSet): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = async () => {
@@ -415,8 +415,9 @@ const PhotoDiaryPage: React.FC = () => {
           const ctx = canvas.getContext('2d')!;
 
           // Расчет кропа с учетом отступов
-          const topPadding = 0.10; // 10% сверху (минимальный отступ для автокропа)
-          const bottomPadding = 0.15; // 15% снизу
+          // Для closeup (6й кадр) - без отступов (0%), для остальных - 20% сверху
+          const topPadding = photoType === 'closeup' ? 0 : 0.20; // 20% сверху для стандартных кадров
+          const bottomPadding = photoType === 'closeup' ? 0 : 0.15; // 15% снизу для стандартных кадров
           
           // Высота области от верха лица до низа с отступами
           const totalHeight = box.height / (1 - topPadding - bottomPadding);
@@ -573,8 +574,8 @@ const PhotoDiaryPage: React.FC = () => {
           [type]: { ...prev[type], [photoKey]: compressedOriginal }
         }));
 
-        // Для профилей и closeup - сразу ручная обрезка
-        if (photoKey === 'leftProfile' || photoKey === 'rightProfile' || photoKey === 'closeup') {
+        // Для профилей - сразу ручная обрезка
+        if (photoKey === 'leftProfile' || photoKey === 'rightProfile') {
           // Сохраняем сжатый для отображения (60%)
           const compressedForDisplay = compressImageForStorage(result, 0.4);
           setData(prev => ({
@@ -588,7 +589,7 @@ const PhotoDiaryPage: React.FC = () => {
           return;
         }
 
-        // Автокроп только для front, left34, right34
+        // Автокроп для front, left34, right34, closeup (closeup с 0% отступами)
         if (!modelsLoaded) {
           setCropError('Модели распознавания лиц еще загружаются. Попробуйте через несколько секунд.');
           setProcessing(false);
@@ -596,7 +597,7 @@ const PhotoDiaryPage: React.FC = () => {
         }
 
         try {
-          const croppedImage = await cropFaceImage(result);
+          const croppedImage = await cropFaceImage(result, photoKey);
           
           setData(prev => ({
             ...prev,
