@@ -163,17 +163,22 @@ const PhotoDiaryPage: React.FC = () => {
     const needsFullAccess = (user as any)?.needsFullAccess;
     const hasStoredPhotos = Object.values(photoMetadata.before).length > 0 || Object.values(photoMetadata.after).length > 0;
     
-    // Показываем запрос только один раз при первом сохранении
-    if (needsFullAccess && !hasStoredPhotos) {
+    // Счётчик загрузок для отложенного запроса доступа (показываем с 3-го фото)
+    const uploadCountKey = `rejuvena_upload_count_${user.id}`;
+    const uploadCount = parseInt(localStorage.getItem(uploadCountKey) || '0');
+    const alreadyPrompted = localStorage.getItem(`rejuvena_access_prompted_${user.id}`) === 'true';
+    
+    // Показываем запрос только один раз и только с 3-го фото
+    if (needsFullAccess && !hasStoredPhotos && !alreadyPrompted && uploadCount >= 2) {
+      localStorage.setItem(`rejuvena_access_prompted_${user.id}`, 'true'); // Отмечаем что запрос показан
+      
       const confirmed = confirm(
         '💾 Хотите сохранить оригиналы фото на сервере?\n\n' +
         '✅ Бесплатное хранение 1 месяц\n' +
         '✅ Возможность скачать коллаж\n' +
         '✅ Восстановление при потере данных\n\n' +
-        'Для этого нужны ваши данные Telegram:\n' +
-        '• Имя и фамилия\n' +
-        '• Username\n\n' +
-        'Разрешить доступ и сохранить фото?'
+        'Для этого нам нужен ваш username в Telegram и разрешение присылать уведомление.\n\n' +
+        'Предоставить доступ?'
       );
       
       if (!confirmed) {
@@ -181,11 +186,17 @@ const PhotoDiaryPage: React.FC = () => {
         return;
       }
       
-      // Перенаправляем на страницу запроса полного доступа
-      alert('Сейчас откроется страница для предоставления доступа. После предоставления доступа загрузите фото снова.');
-      window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user.id}`, '_blank');
+      // Перенаправляем на страницу предоставления доступа с предзаполненными данными
+      const params = new URLSearchParams({
+        tg_user_id: (user as any).telegramId || user.id,
+        prefill: 'true'
+      });
+      window.location.href = `/rejuvena/generate-link?${params.toString()}`;
       return;
     }
+    
+    // Увеличиваем счётчик загрузок
+    localStorage.setItem(uploadCountKey, (uploadCount + 1).toString());
     
     try {
       console.log(`📤 Saving original to server: ${photoKey} for ${type}`);
@@ -404,7 +415,7 @@ const PhotoDiaryPage: React.FC = () => {
           const ctx = canvas.getContext('2d')!;
 
           // Расчет кропа с учетом отступов
-          const topPadding = 0.30; // 30% сверху (увеличено для лучшей детекции InsightFace)
+          const topPadding = 0.10; // 10% сверху (минимальный отступ для автокропа)
           const bottomPadding = 0.15; // 15% снизу
           
           // Высота области от верха лица до низа с отступами
@@ -829,13 +840,12 @@ const PhotoDiaryPage: React.FC = () => {
       const needsFullAccess = (user as any)?.needsFullAccess;
       if (needsFullAccess) {
         const confirmed = confirm(
-          '📱 Для скачивания коллажа нам нужны ваши данные Telegram:\n' +
-          '• Имя и фамилия\n' +
-          '• Username\n\n' +
+          '📱 Для скачивания коллажа нам нужен ваш username в Telegram и разрешение присылать уведомление.\n\n' +
           'Это позволит:\n' +
           '✅ Сохранить фото на сервере на 1 месяц бесплатно\n' +
-          '✅ Персонализировать коллаж\n\n' +
-          'Разрешить доступ к данным?'
+          '✅ Персонализировать коллаж\n' +
+          '✅ Получать уведомления о сроке хранения\n\n' +
+          'Предоставить доступ?'
         );
         
         if (!confirmed) {
@@ -843,10 +853,12 @@ const PhotoDiaryPage: React.FC = () => {
           return;
         }
         
-        // Перенаправляем на страницу запроса полного доступа
-        alert('Сейчас откроется страница для предоставления доступа к вашим данным Telegram');
-        // TODO: открыть Telegram бота или специальную страницу
-        window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user?.id}`, '_blank');
+        // Перенаправляем на страницу предоставления доступа с предзаполненными данными
+        const params = new URLSearchParams({
+          tg_user_id: (user as any).telegramId || user.id,
+          prefill: 'true'
+        });
+        window.location.href = `/rejuvena/generate-link?${params.toString()}`;
         setProcessing(false);
         return;
       }
@@ -1423,7 +1435,8 @@ const PhotoDiaryPage: React.FC = () => {
                       top: `${cropArea.y}px`,
                       width: `${cropArea.width}px`,
                       height: `${cropArea.height}px`,
-                      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                      touchAction: 'none' // Отключаем стандартные жесты браузера
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1449,6 +1462,34 @@ const PhotoDiaryPage: React.FC = () => {
                       
                       document.addEventListener('mousemove', handleMove);
                       document.addEventListener('mouseup', handleUp);
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      const imgElement = e.currentTarget.parentElement?.querySelector('img');
+                      if (!imgElement) return;
+                      
+                      const imgWidth = imgElement.width;
+                      const imgHeight = imgElement.height;
+                      const rect = imgElement.getBoundingClientRect();
+                      const touch = e.touches[0];
+                      const startX = touch.clientX - rect.left - cropArea.x;
+                      const startY = touch.clientY - rect.top - cropArea.y;
+                      
+                      const handleMove = (e: TouchEvent) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const newX = Math.max(0, Math.min(imgWidth - cropArea.width, touch.clientX - rect.left - startX));
+                        const newY = Math.max(0, Math.min(imgHeight - cropArea.height, touch.clientY - rect.top - startY));
+                        setCropArea(prev => ({ ...prev, x: newX, y: newY }));
+                      };
+                      
+                      const handleEnd = () => {
+                        document.removeEventListener('touchmove', handleMove);
+                        document.removeEventListener('touchend', handleEnd);
+                      };
+                      
+                      document.addEventListener('touchmove', handleMove, { passive: false });
+                      document.addEventListener('touchend', handleEnd);
                     }}
                   >
                     <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold" style={{ textShadow: '0 0 4px black' }}>

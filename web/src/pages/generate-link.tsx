@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useAppSelector } from '@/store/hooks';
 
 export default function GenerateLinkPage() {
+  const router = useRouter();
+  const { user } = useAppSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     userId: '',
     username: '',
     firstName: '',
     lastName: '',
   });
+  const [notificationConsent, setNotificationConsent] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
+  
+  // Предзаполнение формы если пришли с параметром prefill
+  useEffect(() => {
+    if (router.query.prefill === 'true' && router.query.tg_user_id) {
+      setFormData({
+        userId: router.query.tg_user_id as string,
+        username: router.query.tg_username as string || user?.username || '',
+        firstName: router.query.tg_first_name as string || (user as any)?.firstName || '',
+        lastName: router.query.tg_last_name as string || (user as any)?.lastName || '',
+      });
+    }
+  }, [router.query, user]);
 
   const generateLink = () => {
     const baseUrl = 'https://seplitza.github.io/rejuvena/test-user';
@@ -107,16 +124,43 @@ export default function GenerateLinkPage() {
               </div>
             </div>
 
+            {/* Согласие на уведомления */}
+            <div className="mb-6">
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  id="notificationConsent"
+                  checked={notificationConsent}
+                  onChange={(e) => setNotificationConsent(e.target.checked)}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="notificationConsent" className="ml-3 text-sm text-gray-700">
+                  Я согласен получать{' '}
+                  <a 
+                    href="/rejuvena/notification-consent" 
+                    target="_blank" 
+                    className="text-blue-600 hover:underline"
+                  >
+                    уведомления
+                  </a>
+                  {' '}о сроках хранения фото и других важных событиях
+                </label>
+              </div>
+              <p className="ml-7 text-xs text-gray-500 mt-1">
+                Уведомления помогут не потерять фото: вы получите напоминания за 7, 3 и 1 день до удаления
+              </p>
+            </div>
+
             <button
               onClick={generateLink}
-              disabled={!formData.userId}
+              disabled={!formData.userId || !notificationConsent}
               className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition ${
-                formData.userId
+                formData.userId && notificationConsent
                   ? 'bg-blue-600 hover:bg-blue-700'
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
             >
-              Сгенерировать ссылку
+              {notificationConsent ? 'Предоставить доступ' : 'Требуется согласие на уведомления'}
             </button>
 
             {generatedLink && (
