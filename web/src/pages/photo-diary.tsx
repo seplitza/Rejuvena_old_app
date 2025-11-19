@@ -1053,8 +1053,8 @@ const PhotoDiaryPage: React.FC = () => {
           <UserAccessStatus 
             user={user} 
             onRequestAccess={() => {
-              alert('Сейчас откроется страница для предоставления полного доступа');
-              window.open(`https://t.me/YOUR_BOT_USERNAME?start=grant_access_${user?.id}`, '_blank');
+              // Открываем бота для предоставления полного доступа
+              window.open(`https://t.me/photodnevnik_bot?start=grant_access_${user?.id}`, '_blank');
             }}
           />
 
