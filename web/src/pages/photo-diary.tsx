@@ -164,8 +164,8 @@ const PhotoDiaryPage: React.FC = () => {
       let exifData: any = null;
       
       try {
-        // Динамический импорт exif-js
-        const EXIF = await import('exif-js');
+        // Динамический импорт exif-js (используем default export)
+        const EXIF = (await import('exif-js')).default || await import('exif-js');
         
         // Извлекаем EXIF данные
         const exifTags = await new Promise<any>((resolve) => {
