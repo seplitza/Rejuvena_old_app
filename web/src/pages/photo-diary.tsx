@@ -160,23 +160,56 @@ const PhotoDiaryPage: React.FC = () => {
         img.onerror = reject;
       });
 
-      // Пытаемся извлечь EXIF дату из Data URL (если была передана камерой/файлом)
+      // Извлекаем EXIF данные с помощью exif-js
       let exifData: any = null;
       
-      // Проверяем, это скриншот или обычное фото
-      // Скриншоты обычно не имеют EXIF данных
-      const isScreenshot = imageDataUrl.length < 50000 || !imageDataUrl.includes('Exif');
-      
-      if (isScreenshot) {
+      try {
+        // Динамический импорт exif-js
+        const EXIF = await import('exif-js');
+        
+        // Извлекаем EXIF данные
+        const exifTags = await new Promise<any>((resolve) => {
+          EXIF.getData(img as any, function(this: any) {
+            resolve(EXIF.getAllTags(this));
+          });
+        });
+        
+        console.log('📷 EXIF tags extracted:', exifTags);
+        
+        // Пытаемся найти дату съёмки
+        const dateTimeOriginal = exifTags?.DateTimeOriginal || exifTags?.DateTime;
+        
+        if (dateTimeOriginal) {
+          // Конвертируем EXIF дату (формат: "YYYY:MM:DD HH:MM:SS") в ISO
+          const exifDateParts = dateTimeOriginal.split(' ');
+          const datePart = exifDateParts[0].replace(/:/g, '-');
+          const timePart = exifDateParts[1] || '00:00:00';
+          const captureDate = new Date(`${datePart}T${timePart}`).toISOString();
+          
+          exifData = {
+            captureDate,
+            camera: exifTags?.Make ? `${exifTags.Make} ${exifTags.Model || ''}`.trim() : null,
+            orientation: exifTags?.Orientation
+          };
+          console.log('✅ EXIF date found:', captureDate);
+        } else if (Object.keys(exifTags || {}).length > 0) {
+          // EXIF есть, но даты нет
+          exifData = {
+            reason: 'EXIF found but no capture date',
+            camera: exifTags?.Make ? `${exifTags.Make} ${exifTags.Model || ''}`.trim() : null
+          };
+          console.log('⚠️ EXIF found but no date');
+        } else {
+          // EXIF данных нет совсем
+          exifData = {
+            reason: 'No EXIF data found (screenshot or edited photo)'
+          };
+          console.log('⚠️ No EXIF data');
+        }
+      } catch (error) {
+        console.error('❌ EXIF extraction error:', error);
         exifData = {
           reason: 'No EXIF data found (screenshot or edited photo)'
-        };
-      } else {
-        // TODO: Для полной реализации нужна библиотека exif-js или piexif
-        // Пока просто отмечаем что данные есть
-        exifData = {
-          captureDate: null, // Будет извлечено позже через библиотеку
-          reason: 'EXIF extraction not yet implemented'
         };
       }
 
