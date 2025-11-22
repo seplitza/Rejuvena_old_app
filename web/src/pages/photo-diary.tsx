@@ -867,17 +867,15 @@ const PhotoDiaryPage: React.FC = () => {
           metadata: photoMetadata,
           userInfo: {
             username: user?.email?.split('@')[0] || user?.name || 'Пользователь',
+            realAgeBefore: data.realAgeBefore,
+            realAgeAfter: data.realAgeAfter,
+            weightBefore: data.weightBefore,
+            weightAfter: data.weightAfter,
+            heightBefore: data.heightBefore,
+            heightAfter: data.heightAfter,
+            commentsBefore: data.commentBefore,
+            commentsAfter: data.commentAfter,
           },
-          botAgeBefore: data.botAgeBefore,
-          botAgeAfter: data.botAgeAfter,
-          realAgeBefore: data.realAgeBefore,
-          realAgeAfter: data.realAgeAfter,
-          weightBefore: data.weightBefore,
-          weightAfter: data.weightAfter,
-          heightBefore: data.heightBefore,
-          heightAfter: data.heightAfter,
-          commentBefore: data.commentBefore,
-          commentAfter: data.commentAfter,
         }),
       });
 
@@ -1121,7 +1119,7 @@ const PhotoDiaryPage: React.FC = () => {
                             : 'Снято: отсутствует инфо'}
                       </div>
                       <div className="truncate">
-                        Загружено: {new Date(photoMetadata.before[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
+                        📤 {new Date(photoMetadata.before[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
                           year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
                         })}
                       </div>
@@ -1188,7 +1186,7 @@ const PhotoDiaryPage: React.FC = () => {
                             : 'Снято: отсутствует инфо'}
                       </div>
                       <div className="truncate">
-                        Загружено: {new Date(photoMetadata.after[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
+                        📤 {new Date(photoMetadata.after[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
                           year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
                         })}
                       </div>
