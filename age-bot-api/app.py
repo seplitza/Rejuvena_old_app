@@ -138,12 +138,17 @@ def estimate_age_endpoint():
         age = estimate_age(image)
         
         if age is None:
-            return jsonify({'error': 'Failed to estimate age'}), 500
+            return jsonify({
+                'success': False,
+                'message': 'Failed to estimate age',
+                'age': None
+            }), 500
         
-        # Возвращаем результат
+        # Возвращаем результат в формате, ожидаемом фронтендом
         return jsonify({
+            'success': True,
             'age': age,
-            'confidence': 0.95,  # Mock confidence, можно добавить реальную если модель поддерживает
+            'confidence': 0.95,
             'status': 'success'
         })
         
@@ -172,10 +177,14 @@ def create_collage():
     }
     """
     try:
+        print('🎨 create_collage called')
         data = request.get_json()
         
         if not data:
+            print('❌ No data provided')
             return jsonify({'error': 'No data provided'}), 400
+        
+        print(f'📦 Received data keys: {list(data.keys())}')
         
         # Поддержка новой структуры с rows
         rows = data.get('rows', [])
