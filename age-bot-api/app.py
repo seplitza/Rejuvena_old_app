@@ -336,17 +336,66 @@ def create_collage():
         
         draw.text((border + 20, footer_y), "Анкета:", fill='black', font=font_normal)
         
+        # Собираем ВСЕ заполненные поля в порядке как в форме
         footer_fields = []
-        if user_info.get('realAgeBefore'):
-            footer_fields.append(f"Возраст До: {user_info['realAgeBefore']}")
-        if user_info.get('realAgeAfter'):
-            footer_fields.append(f"Возраст После: {user_info['realAgeAfter']}")
+        
+        # Бот определил возраст
+        if user_info.get('botAgeBefore') or user_info.get('botAgeAfter'):
+            bot_ages = []
+            if user_info.get('botAgeBefore'):
+                bot_ages.append(str(user_info['botAgeBefore']))
+            if user_info.get('botAgeAfter'):
+                bot_ages.append(str(user_info['botAgeAfter']))
+            if bot_ages:
+                footer_fields.append(f"Бот определил возраст: {' / '.join(bot_ages)}")
+        
+        # Реальный возраст
+        if user_info.get('realAgeBefore') or user_info.get('realAgeAfter'):
+            ages = []
+            if user_info.get('realAgeBefore'):
+                ages.append(str(user_info['realAgeBefore']))
+            if user_info.get('realAgeAfter'):
+                ages.append(str(user_info['realAgeAfter']))
+            if ages:
+                footer_fields.append(f"Возраст: {' / '.join(ages)}")
+        
+        # Вес
+        if user_info.get('weightBefore') or user_info.get('weightAfter'):
+            weights = []
+            if user_info.get('weightBefore'):
+                weights.append(str(user_info['weightBefore']))
+            if user_info.get('weightAfter'):
+                weights.append(str(user_info['weightAfter']))
+            if weights:
+                footer_fields.append(f"Вес: {' / '.join(weights)} кг")
+        
+        # Рост
+        if user_info.get('heightBefore') or user_info.get('heightAfter'):
+            heights = []
+            if user_info.get('heightBefore'):
+                heights.append(str(user_info['heightBefore']))
+            if user_info.get('heightAfter'):
+                heights.append(str(user_info['heightAfter']))
+            if heights:
+                footer_fields.append(f"Рост: {' / '.join(heights)} см")
+        
+        # Пол
         if user_info.get('gender'):
             footer_fields.append(f"Пол: {user_info['gender']}")
+        
+        # Тип кожи
         if user_info.get('skinType'):
             footer_fields.append(f"Тип кожи: {user_info['skinType']}")
+        
+        # Процедуры
         if user_info.get('procedures'):
             footer_fields.append(f"Процедуры: {user_info['procedures']}")
+        
+        # Комментарии (До и После)
+        if user_info.get('commentBefore'):
+            footer_fields.append(f"Комментарий До: {user_info['commentBefore']}")
+        if user_info.get('commentAfter'):
+            footer_fields.append(f"Комментарий После: {user_info['commentAfter']}")
         
         print(f'📝 Footer fields: {footer_fields}')
         print(f'📏 Footer position: y={footer_y}, collage_height={collage_height}')
