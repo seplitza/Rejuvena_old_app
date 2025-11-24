@@ -241,17 +241,18 @@ def create_collage():
         # Извлекаем userInfo для заголовка и футера
         user_info = data.get('userInfo', {})
         username = user_info.get('username', 'Пользователь')
+        print(f'📄 UserInfo: {user_info}')
         
         # Создаём вертикальный коллаж с заголовком и футером
-        # Размеры одного фото в коллаже (КВАДРАТНЫЕ)
-        photo_size = 480  # квадратные фото
+        # Размеры одного фото в коллаже (КВАДРАТНЫЕ) - Увеличено для лучшего качества
+        photo_size = 800  # квадратные фото 800x800
         
-        # Отступы
-        padding = 20  # отступ между фото в паре
-        row_spacing = 40  # отступ между парами
-        border = 40  # рамка по краям
-        header_height = 80  # высота заголовка
-        footer_height = 200  # высота футера с анкетой
+        # Отступы (пропорционально увеличены)
+        padding = 30  # отступ между фото в паре
+        row_spacing = 60  # отступ между парами
+        border = 60  # рамка по краям
+        header_height = 120  # высота заголовка
+        footer_height = 350  # высота футера с анкетой
         
         # Определяем количество пар
         num_pairs = len(rows)
@@ -266,12 +267,14 @@ def create_collage():
         collage = Image.new('RGB', (collage_width, collage_height), 'white')
         draw = ImageDraw.Draw(collage)
         
-        # Шрифты
+        # Шрифты (увеличенные для 800px фото)
         try:
-            font_large = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 32)
-            font_normal = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 24)
-            font_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 20)
-        except:
+            font_large = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 48)
+            font_normal = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 36)
+            font_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 28)
+            print('✅ Fonts loaded successfully')
+        except Exception as e:
+            print(f'⚠️ Font loading failed: {e}, using default')
             font_large = ImageFont.load_default()
             font_normal = ImageFont.load_default()
             font_small = ImageFont.load_default()
@@ -311,7 +314,7 @@ def create_collage():
                 collage.paste(img_after, (x_after, y_position))
         
         # ФУТЕР С АНКЕТОЙ (только заполненные поля)
-        footer_y = photos_start_y + photos_height + 40
+        footer_y = photos_start_y + photos_height + 60
         draw.text((border, footer_y), "Анкета:", fill='black', font=font_normal)
         
         footer_fields = []
@@ -326,15 +329,18 @@ def create_collage():
         if user_info.get('procedures'):
             footer_fields.append(f"Процедуры: {user_info['procedures']}")
         
-        line_y = footer_y + 40
+        print(f'📝 Footer fields: {footer_fields}')
+        
+        line_y = footer_y + 50
         for field in footer_fields:
             draw.text((border, line_y), field, fill='black', font=font_small)
-            line_y += 30
+            line_y += 45
         
-        # Сохраняем в буфер как JPEG
+        # Сохраняем в буфер как JPEG с максимальным качеством
         output = io.BytesIO()
-        collage.save(output, format='JPEG', quality=85)
+        collage.save(output, format='JPEG', quality=95, optimize=True)
         output.seek(0)
+        print(f'✅ Collage created: {collage.size}, {len(output.getvalue())} bytes')
         
         # Возвращаем как base64
         collage_base64 = base64.b64encode(output.getvalue()).decode('utf-8')
