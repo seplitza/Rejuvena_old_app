@@ -252,7 +252,7 @@ def create_collage():
         row_spacing = 60  # отступ между парами
         border = 60  # рамка по краям
         header_height = 120  # высота заголовка
-        footer_height = 350  # высота футера с анкетой
+        footer_height = 450  # высота футера с анкетой (увеличено)
         
         # Определяем количество пар
         num_pairs = len(rows)
@@ -284,12 +284,22 @@ def create_collage():
         header_text = f"Фотодневник | {username} | {current_date}"
         draw.text((border, 30), header_text, fill='black', font=font_large)
         
-        # Функция для обрезки изображения в квадрат (crop center)
+        # Функция для обрезки изображения в квадрат (для лица: 5% сверху, 15% снизу)
         def crop_to_square(img):
             width, height = img.size
             size = min(width, height)
+            
+            # Центрируем по горизонтали
             left = (width - size) // 2
-            top = (height - size) // 2
+            
+            # Для вертикальной обрезки: 5% отступ сверху для лица
+            if height > width:
+                # Портретная ориентация - смещаем вверх для лица
+                top = int(height * 0.05)  # 5% отступ сверху
+            else:
+                # Горизонтальная или квадратная - центрируем
+                top = (height - size) // 2
+            
             return img.crop((left, top, left + size, top + size))
         
         # Размещаем пары фото (До слева, После справа)
@@ -315,7 +325,16 @@ def create_collage():
         
         # ФУТЕР С АНКЕТОЙ (только заполненные поля)
         footer_y = photos_start_y + photos_height + 60
-        draw.text((border, footer_y), "Анкета:", fill='black', font=font_normal)
+        
+        # Рисуем светлый фон для футера (лучшее визуальное отделение)
+        draw.rectangle(
+            [(border, footer_y - 20), (collage_width - border, collage_height - border)],
+            fill='#f5f5f5',
+            outline='#cccccc',
+            width=2
+        )
+        
+        draw.text((border + 20, footer_y), "Анкета:", fill='black', font=font_normal)
         
         footer_fields = []
         if user_info.get('realAgeBefore'):
@@ -330,10 +349,11 @@ def create_collage():
             footer_fields.append(f"Процедуры: {user_info['procedures']}")
         
         print(f'📝 Footer fields: {footer_fields}')
+        print(f'📏 Footer position: y={footer_y}, collage_height={collage_height}')
         
         line_y = footer_y + 50
         for field in footer_fields:
-            draw.text((border, line_y), field, fill='black', font=font_small)
+            draw.text((border + 20, line_y), field, fill='black', font=font_small)
             line_y += 45
         
         # Сохраняем в буфер как JPEG с максимальным качеством
