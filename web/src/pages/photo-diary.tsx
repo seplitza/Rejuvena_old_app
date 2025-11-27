@@ -486,8 +486,8 @@ const PhotoDiaryPage: React.FC = () => {
           const ctx = canvas.getContext('2d')!;
 
           // Расчет кропа с учетом отступов
-          // Для closeup (6й кадр) - без отступов (0%), для остальных - 10% сверху (UX improvement from 5ced541)
-          const topPadding = photoType === 'closeup' ? 0 : 0.10; // 10% сверху для стандартных кадров
+          // Для closeup (6й кадр) - без отступов (0%), для остальных - 20% сверху
+          const topPadding = photoType === 'closeup' ? 0 : 0.20; // 20% сверху для стандартных кадров
           const bottomPadding = photoType === 'closeup' ? 0 : 0.15; // 15% снизу для стандартных кадров
           
           // Высота области от верха лица до низа с отступами
@@ -973,19 +973,35 @@ const PhotoDiaryPage: React.FC = () => {
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'image/jpeg' });
         
-        // Используем URL.createObjectURL для надёжного скачивания
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Определяем iOS для специальной обработки
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         
-        // Освобождаем память
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-        
-        console.log('✅ Collage downloaded');
+        if (isIOS) {
+          // На iOS открываем изображение в новой вкладке (Safari блокирует автоскачивание)
+          const blobUrl = URL.createObjectURL(blob);
+          const newWindow = window.open(blobUrl, '_blank');
+          if (newWindow) {
+            console.log('✅ Collage opened in new tab (iOS)');
+            alert('Коллаж открыт в новой вкладке. Нажмите и удерживайте изображение, затем выберите "Сохранить"');
+          } else {
+            // Если popup заблокирован, используем прямую ссылку
+            window.location.href = blobUrl;
+          }
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        } else {
+          // На Android и Desktop используем стандартное скачивание
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Освобождаем память
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+          console.log('✅ Collage downloaded');
+        }
       } else {
         throw new Error('Не удалось создать коллаж');
       }
