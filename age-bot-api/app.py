@@ -9,6 +9,7 @@ import os
 import base64
 import io
 import numpy as np
+import requests
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -18,21 +19,36 @@ from insightface.app import FaceAnalysis
 app = Flask(__name__)
 CORS(app)  # Разрешаем CORS для фронтенда
 
-# InsightFace app
+# Face++ API credentials
+FACEPP_API_KEY = os.environ.get('FACEPP_API_KEY', '')
+FACEPP_API_SECRET = os.environ.get('FACEPP_API_SECRET', '')
+FACEPP_API_URL = 'https://api-us.faceplusplus.com/facepp/v3/detect'
+
+# InsightFace app (fallback)
 face_app = None
 model_loaded = False
+use_facepp = bool(FACEPP_API_KEY and FACEPP_API_SECRET)
 
 def load_insightface_model():
-    """Загрузка InsightFace модели для определения возраста"""
-    global face_app, model_loaded
+    """Загрузка InsightFace модели для определения возраста (fallback если Face++ недоступен)"""
+    global face_app, model_loaded, use_facepp
+    
+    # Проверяем Face++ credentials
+    if FACEPP_API_KEY and FACEPP_API_SECRET:
+        print('✅ Face++ API configured (primary method)')
+        print(f'   API Key: {FACEPP_API_KEY[:8]}...')
+        model_loaded = True
+        use_facepp = True
+        return True
+    
+    # Fallback на InsightFace если Face++ недоступен
     try:
-        print('Loading InsightFace model...')
-        # Используем buffalo_l с genderage.onnx для определения возраста и пола
-        # Требует ~500MB RAM, используем swap если нужно
+        print('⚠️ Face++ not configured, loading InsightFace as fallback...')
         face_app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
         face_app.prepare(ctx_id=-1, det_size=(640, 640))
         model_loaded = True
-        print('✅ InsightFace buffalo_l model loaded successfully (with age/gender estimation)')
+        use_facepp = False
+        print('✅ InsightFace buffalo_l model loaded successfully (fallback method)')
         return True
     except Exception as e:
         print(f'❌ Failed to load InsightFace model: {e}')
@@ -42,49 +58,105 @@ def load_insightface_model():
 
 def estimate_age(image):
     """
-    Определение возраста по изображению с использованием InsightFace
+    Определение возраста по изображению
+    Использует Face++ API (primary) или InsightFace (fallback)
     
     Возвращает: возраст (int) или None при ошибке
     """
+    global use_facepp
+    
+    # Метод 1: Face++ API (предпочтительный)
+    if use_facepp:
+        try:
+            print('🔍 Using Face++ API for age estimation...')
+            
+            # Конвертируем PIL Image в bytes
+            img_buffer = io.BytesIO()
+            if isinstance(image, Image.Image):
+                if image.mode != 'RGB':
+                    image = image.convert('RGB')
+                image.save(img_buffer, format='JPEG', quality=95)
+            else:
+                # Если numpy array, конвертируем через PIL
+                img_pil = Image.fromarray(image)
+                img_pil.save(img_buffer, format='JPEG', quality=95)
+            
+            img_buffer.seek(0)
+            image_bytes = img_buffer.read()
+            
+            print(f'📸 Image size: {len(image_bytes)} bytes')
+            
+            # Запрос к Face++ API
+            files = {'image_file': ('image.jpg', image_bytes, 'image/jpeg')}
+            payload = {
+                'api_key': FACEPP_API_KEY,
+                'api_secret': FACEPP_API_SECRET,
+                'return_attributes': 'age,gender'
+            }
+            
+            response = requests.post(FACEPP_API_URL, data=payload, files=files, timeout=30)
+            
+            if response.status_code != 200:
+                print(f'⚠️ Face++ API error: {response.status_code}, falling back to InsightFace')
+                use_facepp = False  # Временно переключаемся на fallback
+                return estimate_age(image)  # Retry with InsightFace
+            
+            result = response.json()
+            
+            if 'error_message' in result:
+                print(f'⚠️ Face++ error: {result["error_message"]}, falling back')
+                use_facepp = False
+                return estimate_age(image)
+            
+            if 'faces' not in result or len(result['faces']) == 0:
+                print('⚠️ No face detected by Face++')
+                return None
+            
+            face = result['faces'][0]
+            age = face['attributes']['age']['value']
+            gender = face['attributes'].get('gender', {}).get('value', 'Unknown')
+            
+            print(f'✅ Face++ estimated age: {age}, gender: {gender}')
+            return int(age)
+            
+        except Exception as e:
+            print(f'❌ Face++ error: {e}, falling back to InsightFace')
+            use_facepp = False
+            # Продолжаем с InsightFace fallback
+    
+    # Метод 2: InsightFace (fallback)
     if face_app is None:
-        print('❌ InsightFace model not loaded')
+        print('❌ No age estimation method available')
         return None
     
     try:
-        # Конвертируем PIL Image в numpy array (BGR для InsightFace)
+        print('🔍 Using InsightFace for age estimation (fallback)...')
+        
+        # Конвертируем PIL Image в numpy array (BGR)
         if isinstance(image, Image.Image):
-            # Конвертируем в RGB если нужно
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             img_array = np.array(image)
         else:
             img_array = image
         
-        # InsightFace требует BGR (OpenCV format)
         img_bgr = img_array[:, :, ::-1]
-        
         print(f'📸 Input shape: {img_bgr.shape}')
         
-        # Detect faces and analyze
         faces = face_app.get(img_bgr)
         
         if len(faces) == 0:
-            print('⚠️ No face detected')
+            print('⚠️ No face detected by InsightFace')
             return None
         
-        # Берём первое лицо (самое большое по умолчанию)
         face = faces[0]
-        
-        # InsightFace возвращает точный возраст
         estimated_age = int(face.age)
         
         print(f'✅ InsightFace estimated age: {estimated_age}')
-        print(f'   Face bbox: {face.bbox}, det_score: {face.det_score:.3f}')
-        
         return estimated_age
         
     except Exception as e:
-        print(f'❌ Age estimation error: {e}')
+        print(f'❌ InsightFace error: {e}')
         import traceback
         traceback.print_exc()
         return None
@@ -92,9 +164,11 @@ def estimate_age(image):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Проверка здоровья сервиса"""
+    provider = 'Face++ API' if use_facepp else 'InsightFace (fallback)'
     return jsonify({
         'status': 'ok',
-        'model_loaded': model_loaded
+        'model_loaded': model_loaded,
+        'provider': provider
     })
 
 @app.route('/api/estimate-age', methods=['POST'])

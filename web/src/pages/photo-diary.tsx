@@ -1443,10 +1443,10 @@ const PhotoDiaryPage: React.FC = () => {
                 <div className="flex-1 text-sm text-blue-800 space-y-2">
                   <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для preview в окне корректировки обрезки</li>
-                    <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки</li>
-                    <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
-                    <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
+                    <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для предпросмотра в окне корректировки обрезки</li>
+                    <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 день для возможности коррекции обрезки</li>
+                    <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа хранятся 1 месяц бесплатно, потом автоматически удаляются</li>
+                    <li><span className="font-semibold">С оплаченным курсом:</span> хранение на всё время курса + 1 месяц после его окончания</li>
                     <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
                   </ul>
                 </div>
