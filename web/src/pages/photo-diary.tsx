@@ -692,6 +692,21 @@ const PhotoDiaryPage: React.FC = () => {
           if (photoKey === 'front') {
             console.log(`🔍 Front photo detected - calling estimateAge`);
             await estimateAge(croppedImage, type);
+            
+            // Автозаполнение 6-го ряда (closeup) фронтальным фото с автокропом 0%
+            console.log(`🔄 Auto-filling closeup (row 6) with front photo (0% crop)`);
+            try {
+              // Используем тот же кроп, но с 0% отступами (как для closeup)
+              const closeupCropped = await cropFaceImage(result, 'closeup');
+              setData(prev => ({
+                ...prev,
+                [type]: { ...prev[type], closeup: closeupCropped }
+              }));
+              await savePhotoToServer(closeupCropped, type, 'closeup');
+              console.log(`✅ Closeup auto-filled from front photo`);
+            } catch (error) {
+              console.error(`⚠️ Failed to auto-fill closeup: ${error}`);
+            }
           } else {
             console.log(`⏭️ Skipping age estimation for ${photoKey}`);
           }
@@ -973,23 +988,25 @@ const PhotoDiaryPage: React.FC = () => {
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'image/jpeg' });
         
-        // Определяем iOS для специальной обработки
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        // Для мобильных устройств используем data URI напрямую
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        if (isIOS) {
-          // На iOS открываем изображение в новой вкладке (Safari блокирует автоскачивание)
-          const blobUrl = URL.createObjectURL(blob);
-          const newWindow = window.open(blobUrl, '_blank');
-          if (newWindow) {
-            console.log('✅ Collage opened in new tab (iOS)');
-            alert('Коллаж открыт в новой вкладке. Нажмите и удерживайте изображение, затем выберите "Сохранить"');
-          } else {
-            // Если popup заблокирован, используем прямую ссылку
-            window.location.href = blobUrl;
-          }
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        if (isMobile) {
+          // Мобильные устройства: открываем data URI напрямую
+          const link = document.createElement('a');
+          link.href = result.collage; // data:image/jpeg;base64,...
+          link.download = filename;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          
+          // Для iOS Safari нужен клик с задержкой
+          setTimeout(() => {
+            link.click();
+            document.body.removeChild(link);
+            console.log('✅ Collage download triggered (mobile)');
+          }, 100);
         } else {
-          // На Android и Desktop используем стандартное скачивание
+          // Desktop: стандартное скачивание через blob
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = blobUrl;
@@ -997,10 +1014,8 @@ const PhotoDiaryPage: React.FC = () => {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          
-          // Освобождаем память
           setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-          console.log('✅ Collage downloaded');
+          console.log('✅ Collage downloaded (desktop)');
         }
       } else {
         throw new Error('Не удалось создать коллаж');
