@@ -20,16 +20,34 @@ export interface Course {
 }
 
 export interface Order {
+  id: string;
   orderId: string;
-  marathonId: string;
-  marathonName: string;
-  orderDate: string;
-  status: 'Active' | 'Expired' | 'Cancelled';
-  price: number;
-  currency: string;
-  subscriptionType: 'Free' | 'Paid' | 'Trial';
-  expiryDate: string;
-  autoRenewal: boolean;
+  title: string;
+  subTitle: string;
+  imagePath: string;
+  wpMarathonId: string;
+  startDate: string;
+  endDate: string;
+  isPaid: boolean;
+  days: number;
+  cost: number;
+  orderStatus: string;
+  isPurchased: boolean;
+  isFree: boolean;
+  productType: string;
+  validFrom: string | null;
+  validTo: string | null;
+  languageCulture: string;
+  // Legacy fields for backward compatibility
+  marathonId?: string;
+  marathonName?: string;
+  orderDate?: string;
+  status?: 'Active' | 'Expired' | 'Cancelled';
+  price?: number;
+  currency?: string;
+  subscriptionType?: 'Free' | 'Paid' | 'Trial';
+  expiryDate?: string;
+  autoRenewal?: boolean;
 }
 
 export interface Marathon {
@@ -128,6 +146,8 @@ const coursesSlice = createSlice({
   reducers: {
     // Orders
     setMyOrders(state, action: PayloadAction<Order[]>) {
+      console.log('🔍 REDUCER setMyOrders called with:', action.payload);
+      console.log('🔍 REDUCER setMyOrders length:', action.payload?.length);
       state.myOrders = action.payload;
       state.loadingOrders = false;
       state.ordersError = null;

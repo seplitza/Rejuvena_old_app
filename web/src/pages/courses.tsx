@@ -36,6 +36,12 @@ const CoursesPage: React.FC = () => {
   const loadingCourses = useAppSelector(selectLoadingCourses);
   const courseDetails = useAppSelector(selectSelectedCourse);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 DEBUG myCoursesWithProgress:', myCoursesWithProgress);
+    console.log('🔍 DEBUG myCoursesWithProgress.length:', myCoursesWithProgress.length);
+  }, [myCoursesWithProgress]);
+
   // Fetch data on mount
   useEffect(() => {
     dispatch(fetchMyOrders());
@@ -145,19 +151,19 @@ const CoursesPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myCoursesWithProgress.map((order) => (
                 <MyCourseCard
-                  key={order.orderId}
+                  key={order.orderId || order.id}
                   course={{
                     id: order.marathonId,
-                    title: order.marathonName,
-                    subtitle: order.subscriptionType === 'Free' ? 'Free course' : 'Paid course',
-                    description: `${order.marathon?.totalDays || 0} days of education + practice`,
-                    callToAction: order.subscriptionType === 'Free' ? 'FREE COURSE!' : undefined,
-                    imageUrl: '/images/courses/default.jpg',
+                    title: order.title || order.marathonName || 'Untitled Course',
+                    subtitle: order.subTitle || (order.isFree ? 'Free course' : 'Paid course'),
+                    description: `${order.totalDays || order.marathon?.totalDays || order.days || 0} days of education + practice`,
+                    callToAction: order.isFree ? 'FREE COURSE!' : undefined,
+                    imageUrl: order.imagePath || '/images/courses/default.jpg',
                     progress: order.progress || 0,
-                    totalDays: order.marathon?.totalDays || 0,
+                    totalDays: order.totalDays || order.marathon?.totalDays || order.days || 0,
                     completedDays: order.completedDays || 0,
-                    status: order.status.toLowerCase(),
-                    isFree: order.subscriptionType === 'Free',
+                    status: (order.orderStatus || order.status || 'active').toLowerCase(),
+                    isFree: order.isFree || order.subscriptionType === 'Free',
                     isDemo: order.subscriptionType === 'Trial',
                   }}
                   onStart={() => handleStartCourse(order.marathonId)}

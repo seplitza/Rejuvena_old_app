@@ -17,7 +17,25 @@ export const selectMyOrders = createSelector(
 
 export const selectActiveOrders = createSelector(
   [selectMyOrders],
-  (orders) => orders.filter(order => order.status === 'Active')
+  (orders) => {
+    console.log('🔍 SELECTOR selectMyOrders (all orders):', orders);
+    console.log('🔍 SELECTOR selectMyOrders.length:', orders.length);
+    const filtered = orders.filter(order => {
+      const isActive = order.orderStatus === 'Approved' || 
+        order.status === 'Active' ||
+        order.isPurchased === true;
+      console.log('🔍 SELECTOR order check:', {
+        id: order.id,
+        orderStatus: order.orderStatus,
+        status: order.status,
+        isPurchased: order.isPurchased,
+        isActive
+      });
+      return isActive;
+    });
+    console.log('🔍 SELECTOR filtered active orders:', filtered);
+    return filtered;
+  }
 );
 
 export const selectLoadingOrders = createSelector(
@@ -103,13 +121,21 @@ export const selectMarathonError = createSelector(
 export const selectCoursesWithProgress = createSelector(
   [selectActiveOrders, selectMarathons],
   (orders, marathons) => {
-    return orders.map(order => ({
-      ...order,
-      marathon: marathons[order.marathonId],
-      progress: marathons[order.marathonId]?.progress || 0,
-      completedDays: marathons[order.marathonId]?.completedDays || 0,
-      totalDays: marathons[order.marathonId]?.totalDays || 0,
-    }));
+    console.log('🔍 SELECTOR selectActiveOrders:', orders);
+    console.log('🔍 SELECTOR selectActiveOrders.length:', orders.length);
+    const result = orders.map(order => {
+      const marathonId = order.wpMarathonId || order.marathonId || order.id;
+      return {
+        ...order,
+        marathonId: marathonId, // Ensure marathonId is set
+        marathon: marathons[marathonId],
+        progress: marathons[marathonId]?.progress || 0,
+        completedDays: marathons[marathonId]?.completedDays || 0,
+        totalDays: marathons[marathonId]?.totalDays || order.days || 0,
+      };
+    });
+    console.log('🔍 SELECTOR result:', result);
+    return result;
   }
 );
 
