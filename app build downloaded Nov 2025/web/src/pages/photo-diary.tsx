@@ -160,23 +160,56 @@ const PhotoDiaryPage: React.FC = () => {
         img.onerror = reject;
       });
 
-      // Пытаемся извлечь EXIF дату из Data URL (если была передана камерой/файлом)
+      // Извлекаем EXIF данные с помощью exif-js
       let exifData: any = null;
       
-      // Проверяем, это скриншот или обычное фото
-      // Скриншоты обычно не имеют EXIF данных
-      const isScreenshot = imageDataUrl.length < 50000 || !imageDataUrl.includes('Exif');
-      
-      if (isScreenshot) {
+      try {
+        // Динамический импорт exif-js (используем default export)
+        const EXIF = (await import('exif-js')).default || await import('exif-js');
+        
+        // Извлекаем EXIF данные
+        const exifTags = await new Promise<any>((resolve) => {
+          EXIF.getData(img as any, function(this: any) {
+            resolve(EXIF.getAllTags(this));
+          });
+        });
+        
+        console.log('📷 EXIF tags extracted:', exifTags);
+        
+        // Пытаемся найти дату съёмки
+        const dateTimeOriginal = exifTags?.DateTimeOriginal || exifTags?.DateTime;
+        
+        if (dateTimeOriginal) {
+          // Конвертируем EXIF дату (формат: "YYYY:MM:DD HH:MM:SS") в ISO
+          const exifDateParts = dateTimeOriginal.split(' ');
+          const datePart = exifDateParts[0].replace(/:/g, '-');
+          const timePart = exifDateParts[1] || '00:00:00';
+          const captureDate = new Date(`${datePart}T${timePart}`).toISOString();
+          
+          exifData = {
+            captureDate,
+            camera: exifTags?.Make ? `${exifTags.Make} ${exifTags.Model || ''}`.trim() : null,
+            orientation: exifTags?.Orientation
+          };
+          console.log('✅ EXIF date found:', captureDate);
+        } else if (Object.keys(exifTags || {}).length > 0) {
+          // EXIF есть, но даты нет
+          exifData = {
+            reason: 'EXIF found but no capture date',
+            camera: exifTags?.Make ? `${exifTags.Make} ${exifTags.Model || ''}`.trim() : null
+          };
+          console.log('⚠️ EXIF found but no date');
+        } else {
+          // EXIF данных нет совсем
+          exifData = {
+            reason: 'No EXIF data found (screenshot or edited photo)'
+          };
+          console.log('⚠️ No EXIF data');
+        }
+      } catch (error) {
+        console.error('❌ EXIF extraction error:', error);
         exifData = {
           reason: 'No EXIF data found (screenshot or edited photo)'
-        };
-      } else {
-        // TODO: Для полной реализации нужна библиотека exif-js или piexif
-        // Пока просто отмечаем что данные есть
-        exifData = {
-          captureDate: null, // Будет извлечено позже через библиотеку
-          reason: 'EXIF extraction not yet implemented'
         };
       }
 
@@ -394,7 +427,7 @@ const PhotoDiaryPage: React.FC = () => {
     }
   }, [modelsLoaded]);
 
-  const cropFaceImage = async (imageDataUrl: string): Promise<string> => {
+  const cropFaceImage = async (imageDataUrl: string, photoType?: keyof PhotoSet): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = async () => {
@@ -415,8 +448,9 @@ const PhotoDiaryPage: React.FC = () => {
           const ctx = canvas.getContext('2d')!;
 
           // Расчет кропа с учетом отступов
-          const topPadding = 0.30; // 30% сверху (увеличено для лучшей детекции InsightFace)
-          const bottomPadding = 0.15; // 15% снизу
+          // Для closeup (6й кадр) - без отступов (0%), для остальных - 20% сверху
+          const topPadding = photoType === 'closeup' ? 0 : 0.20; // 20% сверху для стандартных кадров
+          const bottomPadding = photoType === 'closeup' ? 0 : 0.15; // 15% снизу для стандартных кадров
           
           // Высота области от верха лица до низа с отступами
           const totalHeight = box.height / (1 - topPadding - bottomPadding);
@@ -597,7 +631,7 @@ const PhotoDiaryPage: React.FC = () => {
         }
 
         try {
-          const croppedImage = await cropFaceImage(result);
+          const croppedImage = await cropFaceImage(result, photoKey);
           
           setData(prev => ({
             ...prev,
@@ -791,20 +825,36 @@ const PhotoDiaryPage: React.FC = () => {
     try {
       setProcessing(true);
       
-      // Проверяем что все фото загружены
-      const beforePhotos = Object.values(data.before);
-      const afterPhotos = Object.values(data.after);
+      // Собираем только загруженные ряды (хотя бы 1 фото в ряду)
+      const photoTypesOrder: (keyof PhotoSet)[] = ['front', 'left34', 'leftProfile', 'right34', 'rightProfile', 'closeup'];
       
-      const missingBefore = beforePhotos.filter(p => !p).length;
-      const missingAfter = afterPhotos.filter(p => !p).length;
+      const rowsToInclude: {
+        beforePhoto: string | null;
+        afterPhoto: string | null;
+        photoType: keyof PhotoSet;
+      }[] = [];
       
-      if (missingBefore > 0 || missingAfter > 0) {
-        alert(`Загрузите все фотографии!\nНе хватает: ${missingBefore} фото "До" и ${missingAfter} фото "После"`);
+      photoTypesOrder.forEach(photoType => {
+        const hasBefore = !!data.before[photoType];
+        const hasAfter = !!data.after[photoType];
+        
+        // Включаем ряд если есть хотя бы 1 фото
+        if (hasBefore || hasAfter) {
+          rowsToInclude.push({
+            beforePhoto: data.before[photoType] || null,
+            afterPhoto: data.after[photoType] || null,
+            photoType: photoType,
+          });
+        }
+      });
+      
+      if (rowsToInclude.length === 0) {
+        alert('Загрузите хотя бы одну фотографию для создания коллажа!');
         setProcessing(false);
         return;
       }
       
-      console.log('🎨 Creating collage...');
+      console.log(`🎨 Creating collage with ${rowsToInclude.length} rows...`);
       
       // Отправляем запрос на создание коллажа
       const response = await fetch('https://api.seplitza.ru/api/create-collage', {
@@ -813,18 +863,19 @@ const PhotoDiaryPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          beforePhotos: beforePhotos,
-          afterPhotos: afterPhotos,
-          botAgeBefore: data.botAgeBefore,
-          botAgeAfter: data.botAgeAfter,
-          realAgeBefore: data.realAgeBefore,
-          realAgeAfter: data.realAgeAfter,
-          weightBefore: data.weightBefore,
-          weightAfter: data.weightAfter,
-          heightBefore: data.heightBefore,
-          heightAfter: data.heightAfter,
-          commentBefore: data.commentBefore,
-          commentAfter: data.commentAfter,
+          rows: rowsToInclude,
+          metadata: photoMetadata,
+          userInfo: {
+            username: user?.email?.split('@')[0] || user?.name || 'Пользователь',
+            realAgeBefore: data.realAgeBefore,
+            realAgeAfter: data.realAgeAfter,
+            weightBefore: data.weightBefore,
+            weightAfter: data.weightAfter,
+            heightBefore: data.heightBefore,
+            heightAfter: data.heightAfter,
+            commentsBefore: data.commentBefore,
+            commentsAfter: data.commentAfter,
+          },
         }),
       });
 
@@ -933,7 +984,7 @@ const PhotoDiaryPage: React.FC = () => {
               <span className="text-2xl">💡</span>
             </div>
             <p className="text-sm text-blue-800 flex-1">
-              <span className="font-bold">Tip!</span> When taking pictures, keep your camera horizontally
+              <span className="font-bold">Совет!</span> При съёмке держите камеру горизонтально
             </p>
             <div className="flex-shrink-0 flex items-center space-x-2">
               <div className="w-12 h-10 bg-white border-2 border-blue-800 rounded flex items-center justify-center">
@@ -947,24 +998,28 @@ const PhotoDiaryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Правила хранения фотографий */}
-          <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mr-3">
-                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {/* Правила хранения фотографий - заголовок с прокруткой */}
+          <div 
+            className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors"
+            onClick={() => {
+              const policyElement = document.getElementById('storage-policy-detail');
+              if (policyElement) {
+                policyElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 mr-3">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="font-bold text-base text-blue-800">Хранение фотографий и автосохранение</p>
               </div>
-              <div className="flex-1 text-sm text-blue-800 space-y-2">
-                <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для preview в окне корректировки обрезки</li>
-                  <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки и использования в рекламе</li>
-                  <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
-                  <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
-                  <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
-                </ul>
-              </div>
+              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </div>
 
@@ -1058,10 +1113,10 @@ const PhotoDiaryPage: React.FC = () => {
                     <div className="text-xs text-gray-600 text-center w-full px-1 space-y-0.5">
                       <div className="truncate">
                         {photoMetadata.before[photoType.id]?.exifData?.captureDate 
-                          ? `📷 ${new Date(photoMetadata.before[photoType.id]!.exifData.captureDate).toLocaleDateString('ru-RU')}`
+                          ? `Снято: ${new Date(photoMetadata.before[photoType.id]!.exifData.captureDate).toLocaleDateString('ru-RU')}`
                           : photoMetadata.before[photoType.id]?.exifData?.reason 
-                            ? `⚠️ ${photoMetadata.before[photoType.id]!.exifData.reason}`
-                            : '📷 Дата съемки неизвестна'}
+                            ? `Снято: ${photoMetadata.before[photoType.id]!.exifData.reason.includes('No EXIF') ? 'отсутствует инфо. Скриншот или корректированное фото' : photoMetadata.before[photoType.id]!.exifData.reason}`
+                            : 'Снято: отсутствует инфо'}
                       </div>
                       <div className="truncate">
                         📤 {new Date(photoMetadata.before[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
@@ -1125,10 +1180,10 @@ const PhotoDiaryPage: React.FC = () => {
                     <div className="text-xs text-gray-600 text-center w-full px-1 space-y-0.5">
                       <div className="truncate">
                         {photoMetadata.after[photoType.id]?.exifData?.captureDate 
-                          ? `📷 ${new Date(photoMetadata.after[photoType.id]!.exifData.captureDate).toLocaleDateString('ru-RU')}`
+                          ? `Снято: ${new Date(photoMetadata.after[photoType.id]!.exifData.captureDate).toLocaleDateString('ru-RU')}`
                           : photoMetadata.after[photoType.id]?.exifData?.reason 
-                            ? `⚠️ ${photoMetadata.after[photoType.id]!.exifData.reason}`
-                            : '📷 Дата съемки неизвестна'}
+                            ? `Снято: ${photoMetadata.after[photoType.id]!.exifData.reason.includes('No EXIF') ? 'отсутствует инфо. Скриншот или корректированное фото' : photoMetadata.after[photoType.id]!.exifData.reason}`
+                            : 'Снято: отсутствует инфо'}
                       </div>
                       <div className="truncate">
                         📤 {new Date(photoMetadata.after[photoType.id]!.uploadDate).toLocaleDateString('ru-RU', { 
@@ -1227,6 +1282,27 @@ const PhotoDiaryPage: React.FC = () => {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               Фотографии автоматически сохраняются
+            </div>
+
+            {/* Детали правил хранения фотографий */}
+            <div id="storage-policy-detail" className="mt-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mr-3">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-sm text-blue-800 space-y-2">
+                  <p className="font-bold text-base">Хранение фотографий и автосохранение:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li><span className="font-semibold">В браузере:</span> сжатые копии оригиналов (50% качество) хранятся локально 24 часа для preview в окне корректировки обрезки</li>
+                    <li><span className="font-semibold">На сервере - оригиналы:</span> необрезанные фото (100% качество) хранятся 1 месяц для возможности ре-обрезки</li>
+                    <li><span className="font-semibold">На сервере - обрезанные:</span> финальные фото для коллажа</li>
+                    <li><span className="font-semibold">С оплаченным курсом:</span> на всё время курса + 1 месяц после окончания</li>
+                    <li><span className="font-semibold">Уведомления:</span> мы пришлём напоминания о удалении фото за 7, 3 и 1 день. Вы сможете продлить хранение, оформив курс</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </main>

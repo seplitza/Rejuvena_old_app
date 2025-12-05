@@ -1,0 +1,18 @@
+[Unit]
+Description=Age-bot API Service
+After=network.target
+
+[Service]
+Type=notify
+User=root
+WorkingDirectory=/var/www/age-bot-api
+Environment="PATH=/var/www/age-bot-api/venv/bin"
+ExecStart=/var/www/age-bot-api/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 --timeout 300 --access-logfile /var/www/age-bot-api/access.log --error-logfile /var/www/age-bot-api/error.log app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

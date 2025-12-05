@@ -51,7 +51,8 @@ function* fetchMyOrdersSaga(): Generator<any, void, any> {
       { params: { timeZoneOffSet } }
     );
 
-    yield put(setMyOrders(response.items || []));
+    // API returns { currentCourses, availableCourses, archives }
+    yield put(setMyOrders(response.currentCourses || []));
   } catch (error: any) {
     console.error('Failed to fetch orders:', error);
     yield put(setOrdersError(error.message || 'Failed to load orders'));
@@ -67,10 +68,12 @@ function* fetchAvailableCoursesSaga(): Generator<any, void, any> {
     
     const response = yield call(
       request.get,
-      endpoints.get_marathons_guest_user
+      endpoints.get_order_list,
+      { params: { timeZoneOffSet: getTimeZoneOffset() } }
     );
 
-    yield put(setAvailableCourses(response.marathons || []));
+    // API returns { currentCourses, availableCourses, archives }
+    yield put(setAvailableCourses(response.availableCourses || []));
   } catch (error: any) {
     console.error('Failed to fetch available courses:', error);
     yield put(setCoursesError(error.message || 'Failed to load courses'));

@@ -1,0 +1,7 @@
+Flask==3.0.0
+flask-cors==4.0.0
+mxnet==1.9.1
+numpy==1.23.5
+Pillow>=10.0.0
+opencv-python-headless
+gunicorn==21.2.0
