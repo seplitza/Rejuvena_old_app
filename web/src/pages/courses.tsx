@@ -145,7 +145,8 @@ const CoursesPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myCoursesWithProgress.map((order) => {
                 const isFree = order.cost === 0 || order.isFree;
-                const dayText = order.days === 1 ? 'день' : order.days < 5 ? 'дня' : 'дней';
+                const dayText = order.days === 1 ? 'день' : order.days >= 2 && order.days <= 4 ? 'дня' : 'дней';
+                const fallbackDescription = `${order.days || 0} ${dayText} обучения + курсы практики`;
                 
                 return (
                   <MyCourseCard
@@ -154,7 +155,7 @@ const CoursesPage: React.FC = () => {
                       id: order.marathonId,
                       title: order.title || order.marathonName || 'Курс без названия',
                       subtitle: order.subTitle || (isFree ? 'Бесплатный курс' : `${order.cost} ₽`),
-                      description: order.description || `${order.days || 0} ${dayText} обучения и практики`,
+                      description: order.courseDescription || order.description || fallbackDescription,
                       callToAction: isFree ? 'БЕСПЛАТНЫЙ КУРС!' : undefined,
                       imageUrl: order.imagePath || '/images/courses/default.jpg',
                       progress: order.progress || 0,

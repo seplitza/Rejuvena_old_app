@@ -25,6 +25,7 @@ export interface Order {
   title: string;
   subTitle: string;
   description?: string;
+  courseDescription?: string;
   imagePath: string;
   wpMarathonId: string;
   startDate: string;

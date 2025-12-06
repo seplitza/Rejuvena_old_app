@@ -85,13 +85,13 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
             onClick={onStart}
             className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase"
           >
-            GO OVER
+            ПРИСТУПИТЬ
           </button>
           <button
             onClick={onLearnMore}
             className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] font-bold py-3 px-4 rounded-full hover:bg-blue-50 transition-all duration-300 text-sm uppercase"
           >
-            Learn more
+            ПОДРОБНЕЕ
           </button>
         </div>
       </div>
