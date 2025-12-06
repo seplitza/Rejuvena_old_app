@@ -154,7 +154,7 @@ const CoursesPage: React.FC = () => {
                     course={{
                       id: order.marathonId,
                       title: order.title || order.marathonName || 'Курс без названия',
-                      subtitle: order.subTitle || (isFree ? 'Бесплатный курс' : `${order.cost} ₽`),
+                      subtitle: order.subTitle,
                       description: order.courseDescription || order.description || fallbackDescription,
                       callToAction: isFree ? 'БЕСПЛАТНЫЙ КУРС!' : undefined,
                       imageUrl: order.imagePath || '/images/courses/default.jpg',
@@ -164,6 +164,7 @@ const CoursesPage: React.FC = () => {
                       status: (order.orderStatus || order.status || 'active').toLowerCase(),
                       isFree: isFree,
                       isDemo: order.subscriptionType === 'Trial',
+                      cost: order.cost,
                     }}
                     onStart={() => handleStartCourse(order.marathonId)}
                     onLearnMore={() => handleCourseDetails(order)}

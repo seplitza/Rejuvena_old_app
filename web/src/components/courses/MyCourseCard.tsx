@@ -12,8 +12,9 @@ interface MyCourseCardProps {
     totalDays: number;
     completedDays: number;
     status: string;
-    isFree?: boolean;
+    isFree: boolean;
     isDemo?: boolean;
+    cost?: number;
   };
   onStart: () => void;
   onLearnMore: () => void;
@@ -37,22 +38,26 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
 
       {/* Content */}
       <div className="p-6">
-        {/* Goal Badge */}
-        <div className="inline-block mb-3">
-          <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-            1 goal. {course.title}
-          </span>
-        </div>
+        {/* Subtitle Badge */}
+        {course.subtitle && (
+          <div className="inline-block mb-3">
+            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+              {course.subtitle}
+            </span>
+          </div>
+        )}
 
         {/* Title */}
         <h3 className="text-xl font-bold text-[#1e3a8a] mb-1">
-          {course.subtitle}
+          {course.title}
         </h3>
 
-        {/* Description */}
-        <p className="text-sm text-gray-700 font-medium mb-2">
-          {course.description}
-        </p>
+        {/* Cost */}
+        {!course.isFree && course.cost && (
+          <p className="text-sm text-gray-700 font-medium mb-2">
+            Подписки от <span className="font-bold text-[#1e3a8a]">{course.cost} ₽</span>
+          </p>
+        )}
 
         {/* Call to Action */}
         {course.callToAction && (
