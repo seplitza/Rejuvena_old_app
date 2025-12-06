@@ -30,6 +30,7 @@ const CoursesPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOwnedCourse, setIsOwnedCourse] = useState(false);
 
   // Redux selectors
   const myCoursesWithProgress = useAppSelector(selectCoursesWithProgress);
@@ -67,12 +68,13 @@ const CoursesPage: React.FC = () => {
     }
   }, [myCoursesWithProgress.length, dispatch]);
 
-  const handleCourseDetails = (course: any) => {
+  const handleCourseDetails = (course: any, isOwned: boolean = false) => {
     setSelectedCourse(course);
+    setIsOwnedCourse(isOwned);
     setIsModalOpen(true);
     // Fetch detailed info from API
-    if (course.id || course.marathonId) {
-      dispatch(fetchCourseDetails(course.id || course.marathonId));
+    if (course.id || course.marathonId || course.wpMarathonId) {
+      dispatch(fetchCourseDetails(course.wpMarathonId || course.marathonId || course.id));
     }
   };
 
@@ -211,7 +213,7 @@ const CoursesPage: React.FC = () => {
                     }}
                     language={selectedLanguage}
                     onStart={() => handleStartCourse(order.marathonId)}
-                    onLearnMore={() => handleCourseDetails(order)}
+                    onLearnMore={() => handleCourseDetails(order, true)}
                   />
                 );
               })}
@@ -259,7 +261,7 @@ const CoursesPage: React.FC = () => {
                     }}
                     language={selectedLanguage}
                     onJoin={() => handleJoinCourse(course.id)}
-                    onDetails={() => handleCourseDetails(course)}
+                    onDetails={() => handleCourseDetails(course, false)}
                   />
                 );
               })}
@@ -271,13 +273,21 @@ const CoursesPage: React.FC = () => {
       {/* Модальное окно с деталями курса */}
       {isModalOpen && selectedCourse && (
         <CourseDetailModal
-          course={selectedCourse}
+          course={{
+            ...selectedCourse,
+            ...courseDetails, // Merge course details from API
+          }}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onJoin={() => {
-            handleJoinCourse(selectedCourse.id);
+            if (isOwnedCourse) {
+              handleStartCourse(selectedCourse.wpMarathonId || selectedCourse.marathonId || selectedCourse.id);
+            } else {
+              handleJoinCourse(selectedCourse.id);
+            }
             setIsModalOpen(false);
           }}
+          isOwnedCourse={isOwnedCourse}
         />
       )}
     </div>

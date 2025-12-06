@@ -5,6 +5,7 @@ interface CourseDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onJoin: () => void;
+  isOwnedCourse?: boolean; // Flag to determine if user owns this course
 }
 
 const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
@@ -12,6 +13,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   isOpen,
   onClose,
   onJoin,
+  isOwnedCourse = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'description' | 'program' | 'reviews'>('description');
 
@@ -51,10 +53,18 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
           <div className="overflow-y-auto max-h-[90vh]">
             {/* Header with Image */}
             <div className="relative h-64 bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-              <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-2xl">
-                <div className="text-8xl">
-                  {course.isDemo ? '🧘‍♀️' : course.level === 'advanced' ? '💪' : '👁️'}
-                </div>
+              <div className={`w-40 h-40 bg-white flex items-center justify-center shadow-2xl overflow-hidden ${
+                course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[40px]'
+              }`}>
+                {course.imageUrl || course.imagePath ? (
+                  <img 
+                    src={course.imageUrl || course.imagePath} 
+                    alt={course.title} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <div className="text-8xl">🧘‍♀️</div>
+                )}
               </div>
             </div>
 
@@ -65,7 +75,10 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                 <h2 className="text-3xl font-bold text-[#1e3a8a] mb-2">
                   {course.title}
                 </h2>
-                <p className="text-lg text-gray-600">{course.subtitle}</p>
+                {course.subTitle && (
+                  <p className="text-lg text-purple-600 font-medium mb-1">{course.subTitle}</p>
+                )}
+                <p className="text-sm text-gray-500">{course.subtitle}</p>
               </div>
 
               {/* Tabs */}
@@ -108,9 +121,10 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
               <div className="mb-8">
                 {activeTab === 'description' && (
                   <div className="prose max-w-none">
-                    <p className="text-gray-700 leading-relaxed mb-4">
-                      {course.description}
-                    </p>
+                    <div 
+                      className="text-gray-700 leading-relaxed mb-4"
+                      dangerouslySetInnerHTML={{ __html: course.courseDescription || course.description || 'Описание курса' }}
+                    />
                     <div className="bg-blue-50 rounded-lg p-6 mt-6">
                       <h3 className="text-lg font-semibold text-[#1e3a8a] mb-3">
                         Что вы получите:
@@ -208,7 +222,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   onClick={onJoin}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  {course.isFree ? 'Начать бесплатно' : 'Присоединиться'}
+                  {isOwnedCourse ? 'ПРИСТУПИТЬ' : 'ОПЛАТИТЬ'}
                 </button>
                 <button
                   onClick={onClose}
