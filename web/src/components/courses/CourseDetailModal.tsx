@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 interface CourseDetailModalProps {
   course: any;
@@ -8,6 +8,23 @@ interface CourseDetailModalProps {
   isOwnedCourse?: boolean; // Flag to determine if user owns this course
 }
 
+// Function to extract bullet points from HTML description
+const extractBulletPoints = (htmlContent: string): string[] => {
+  if (!htmlContent) return [];
+  
+  // Remove HTML tags
+  const textContent = htmlContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  // Split by common sentence separators and filter meaningful points
+  const sentences = textContent
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20 && s.length < 150); // Filter reasonable length sentences
+  
+  // Take first 3-5 most meaningful points
+  return sentences.slice(0, Math.min(5, sentences.length));
+};
+
 const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   course,
   isOpen,
@@ -16,6 +33,24 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   isOwnedCourse = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'description' | 'program' | 'reviews'>('description');
+
+  // Generate bullet points from course description
+  const bulletPoints = useMemo(() => {
+    const description = course.courseDescription || course.description || '';
+    const extracted = extractBulletPoints(description);
+    
+    // Always include support community
+    const points = extracted.length > 0 ? extracted : [
+      `${course.duration || course.days || 0} дней обучающих материалов`,
+      'Практические упражнения каждый день',
+      'Доступ к материалам навсегда'
+    ];
+    
+    // Add community support as the last point
+    points.push('Поддержка сообщества https://t.me/seplitza_support');
+    
+    return points;
+  }, [course.courseDescription, course.description, course.duration, course.days]);
 
   if (!isOpen) return null;
 
@@ -54,7 +89,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
             {/* Header with Image */}
             <div className="relative h-64 bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
               <div className={`w-40 h-40 bg-white flex items-center justify-center shadow-2xl overflow-hidden ${
-                course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[30px]'
+                course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[20px]'
               }`}>
                 {course.imageUrl || course.imagePath ? (
                   <img 
@@ -130,30 +165,14 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                         Что вы получите:
                       </h3>
                       <ul className="space-y-2 text-gray-700">
-                        <li className="flex items-start">
-                          <svg className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>{course.duration} дней обучающих материалов</span>
-                        </li>
-                        <li className="flex items-start">
-                          <svg className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Практические упражнения каждый день</span>
-                        </li>
-                        <li className="flex items-start">
-                          <svg className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Доступ к материалам навсегда</span>
-                        </li>
-                        <li className="flex items-start">
-                          <svg className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Поддержка сообщества</span>
-                        </li>
+                        {bulletPoints.map((point, index) => (
+                          <li key={index} className="flex items-start">
+                            <svg className="h-6 w-6 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>{point}</span>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>

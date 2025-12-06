@@ -74,13 +74,14 @@ const CoursesPage: React.FC = () => {
     setIsOwnedCourse(isOwned);
     setIsModalOpen(true);
     // Fetch detailed info from API
-    // For owned courses: use wpMarathonId (language-specific) first, then marathonId
-    // For available courses: use id directly
+    // For owned courses: order.id is the language-specific course ID from currentCourses
+    // For available courses: use course.id directly
     const courseId = isOwned 
-      ? (course.wpMarathonId || course.marathonId || course.id)
+      ? (course.id || course.wpMarathonId || course.marathonId)
       : (course.id || course.wpMarathonId || course.marathonId);
     
     if (courseId) {
+      console.log('Fetching course details for:', courseId, 'isOwned:', isOwned, 'course:', course);
       dispatch(fetchCourseDetails(courseId));
     }
   };

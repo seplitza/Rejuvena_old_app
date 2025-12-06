@@ -32,7 +32,7 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, language, onStart, 
       <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
         {/* Изображение курса: круглое для Marathon, квадратное для Course */}
         <div className={`w-32 h-32 bg-white flex items-center justify-center shadow-lg overflow-hidden ${
-          course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[30px]'
+          course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[20px]'
         }`}>
           {course.imageUrl ? (
             <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover" />
