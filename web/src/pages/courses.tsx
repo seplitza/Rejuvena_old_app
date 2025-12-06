@@ -156,7 +156,7 @@ const CoursesPage: React.FC = () => {
                       title: order.title || order.marathonName || 'Курс без названия',
                       subtitle: order.subTitle,
                       description: order.courseDescription || order.description || fallbackDescription,
-                      callToAction: isFree ? 'БЕСПЛАТНЫЙ КУРС!' : undefined,
+                      callToAction: isFree ? 'Попробуй. Старт не требует оплаты' : undefined,
                       imageUrl: order.imagePath || '/images/courses/default.jpg',
                       progress: order.progress || 0,
                       totalDays: order.totalDays || order.marathon?.totalDays || order.days || 0,

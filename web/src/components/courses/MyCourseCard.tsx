@@ -25,9 +25,13 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
       {/* Header с иконкой */}
       <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-        {/* Placeholder для изображения курса */}
-        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg">
-          <div className="text-6xl">🧘‍♀️</div>
+        {/* Изображение курса */}
+        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+          {course.imageUrl ? (
+            <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="text-6xl">🧘‍♀️</div>
+          )}
         </div>
         {course.isDemo && (
           <div className="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
@@ -51,6 +55,13 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
         <h3 className="text-xl font-bold text-[#1e3a8a] mb-1">
           {course.title}
         </h3>
+
+        {/* Duration Description */}
+        {course.description && (
+          <p className="text-sm text-gray-600 mb-2">
+            {course.description}
+          </p>
+        )}
 
         {/* Cost */}
         {!course.isFree && course.cost && (
