@@ -8,21 +8,62 @@ interface CourseDetailModalProps {
   isOwnedCourse?: boolean; // Flag to determine if user owns this course
 }
 
-// Function to extract bullet points from HTML description
-const extractBulletPoints = (htmlContent: string): string[] => {
+// Function to clean and extract bullet points from HTML description
+const extractBulletPoints = (htmlContent: string, courseDuration?: number): string[] => {
   if (!htmlContent) return [];
   
-  // Remove HTML tags
-  const textContent = htmlContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Remove "Powered by Froala Editor" text
+  let cleanedContent = htmlContent.replace(/Powered by Froala Editor/gi, '');
   
-  // Split by common sentence separators and filter meaningful points
+  // Decode HTML entities (&nbsp;, &laquo;, &raquo;, etc.)
+  cleanedContent = cleanedContent
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&laquo;/g, '«')
+    .replace(/&raquo;/g, '»')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+  
+  // Remove HTML tags but preserve structure
+  const textContent = cleanedContent
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<\/p>/gi, '. ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Split into sentences
   const sentences = textContent
     .split(/[.!?]+/)
     .map(s => s.trim())
-    .filter(s => s.length > 20 && s.length < 150); // Filter reasonable length sentences
+    .filter(s => s.length > 15 && s.length < 200); // Filter reasonable sentences
   
-  // Take first 3-5 most meaningful points
-  return sentences.slice(0, Math.min(5, sentences.length));
+  // Smart selection: prefer sentences with keywords
+  const keywords = ['получ', 'научи', 'освои', 'работа', 'упражнен', 'техник', 'метод', 'результат', 'улучш', 'избав'];
+  const scoreSentence = (s: string) => {
+    const lower = s.toLowerCase();
+    return keywords.reduce((score, kw) => score + (lower.includes(kw) ? 1 : 0), 0);
+  };
+  
+  // Sort by relevance and take top 3-4
+  const sortedSentences = sentences
+    .map(s => ({ text: s, score: scoreSentence(s) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(item => item.text);
+  
+  // If we got good sentences, use them; otherwise use defaults
+  if (sortedSentences.length >= 2) {
+    return sortedSentences;
+  }
+  
+  // Fallback to default points
+  return [
+    `${courseDuration || 0} дней обучающих материалов`,
+    'Практические упражнения каждый день',
+    'Доступ к материалам навсегда'
+  ];
 };
 
 const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
@@ -34,19 +75,35 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'description' | 'program' | 'reviews'>('description');
 
+  // Clean description HTML from unwanted content
+  const cleanDescription = useMemo(() => {
+    let html = course.courseDescription || course.description || 'Описание курса';
+    
+    // Remove "Powered by Froala Editor"
+    html = html.replace(/Powered by Froala Editor/gi, '');
+    
+    // Fix HTML entities
+    html = html
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&laquo;/g, '«')
+      .replace(/&raquo;/g, '»')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&');
+    
+    // Remove duplicate emojis (2 or more of the same emoji in a row)
+    html = html.replace(/([\u{1F300}-\u{1F9FF}])\1+/gu, '$1');
+    
+    return html;
+  }, [course.courseDescription, course.description]);
+
   // Generate bullet points from course description
   const bulletPoints = useMemo(() => {
     const description = course.courseDescription || course.description || '';
-    const extracted = extractBulletPoints(description);
+    const courseDuration = course.duration || course.days || 0;
+    const extracted = extractBulletPoints(description, courseDuration);
     
-    // Always include support community
-    const points = extracted.length > 0 ? extracted : [
-      `${course.duration || course.days || 0} дней обучающих материалов`,
-      'Практические упражнения каждый день',
-      'Доступ к материалам навсегда'
-    ];
-    
-    // Add community support as the last point
+    // Always add community support as the last point
+    const points = [...extracted];
     points.push('Поддержка сообщества https://t.me/seplitza_support');
     
     return points;
@@ -158,7 +215,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   <div className="prose max-w-none">
                     <div 
                       className="text-gray-700 leading-relaxed mb-4"
-                      dangerouslySetInnerHTML={{ __html: course.courseDescription || course.description || 'Описание курса' }}
+                      dangerouslySetInnerHTML={{ __html: cleanDescription }}
                     />
                     <div className="bg-blue-50 rounded-lg p-6 mt-6">
                       <h3 className="text-lg font-semibold text-[#1e3a8a] mb-3">
