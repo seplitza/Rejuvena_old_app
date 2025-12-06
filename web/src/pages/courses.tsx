@@ -155,8 +155,7 @@ const CoursesPage: React.FC = () => {
                       id: order.marathonId,
                       title: order.title || order.marathonName || 'Курс без названия',
                       subtitle: order.subTitle,
-                      description: order.courseDescription || order.description || fallbackDescription,
-                      callToAction: isFree ? 'Попробуй. Старт не требует оплаты' : undefined,
+                      description: fallbackDescription,
                       imageUrl: order.imagePath || '/images/courses/default.jpg',
                       progress: order.progress || 0,
                       totalDays: order.totalDays || order.marathon?.totalDays || order.days || 0,
@@ -165,6 +164,7 @@ const CoursesPage: React.FC = () => {
                       isFree: isFree,
                       isDemo: order.subscriptionType === 'Trial',
                       cost: order.cost,
+                      productType: order.productType || order.courseType,
                     }}
                     onStart={() => handleStartCourse(order.marathonId)}
                     onLearnMore={() => handleCourseDetails(order)}

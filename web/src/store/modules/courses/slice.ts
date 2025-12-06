@@ -36,7 +36,8 @@ export interface Order {
   orderStatus: string;
   isPurchased: boolean;
   isFree: boolean;
-  productType: string;
+  productType: string; // 'Marathon' or 'Course' - Marathon has circular image and mass start, Course has square image and individual start
+  courseType?: string;
   validFrom: string | null;
   validTo: string | null;
   languageCulture: string;

@@ -15,6 +15,7 @@ interface MyCourseCardProps {
     isFree: boolean;
     isDemo?: boolean;
     cost?: number;
+    productType?: string;
   };
   onStart: () => void;
   onLearnMore: () => void;
@@ -25,8 +26,10 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
       {/* Header с иконкой */}
       <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-        {/* Изображение курса */}
-        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+        {/* Изображение курса: круглое для Marathon, квадратное для Course */}
+        <div className={`w-32 h-32 bg-white flex items-center justify-center shadow-lg overflow-hidden ${
+          course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-2xl'
+        }`}>
           {course.imageUrl ? (
             <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover" />
           ) : (
@@ -52,28 +55,14 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, onStart, onLearnMor
         )}
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-[#1e3a8a] mb-1">
+        <h3 className="text-xl font-bold text-[#1e3a8a] mb-2">
           {course.title}
         </h3>
 
-        {/* Duration Description */}
-        {course.description && (
-          <p className="text-sm text-gray-600 mb-2">
-            {course.description}
-          </p>
-        )}
-
         {/* Cost */}
         {!course.isFree && course.cost && (
-          <p className="text-sm text-gray-700 font-medium mb-2">
+          <p className="text-sm text-gray-700 font-medium mb-4">
             Подписки от <span className="font-bold text-[#1e3a8a]">{course.cost} ₽</span>
-          </p>
-        )}
-
-        {/* Call to Action */}
-        {course.callToAction && (
-          <p className="text-base font-bold text-red-600 mb-4 uppercase">
-            {course.callToAction}
           </p>
         )}
 
