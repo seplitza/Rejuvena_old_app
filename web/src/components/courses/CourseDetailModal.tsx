@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { translations, getRussianPluralForm, type LanguageCode } from '../../utils/i18n';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchMarathon } from '../../store/modules/courses/slice';
-import { selectCourseHasValidAccess, isValidOrderId } from '../../store/modules/courses/selectors';
 
 interface CourseDetailModalProps {
   course: any;
@@ -89,19 +88,15 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   const marathonId = course.wpMarathonId || course.marathonId || course.id;
   const marathon = useAppSelector(state => state.courses.marathons[marathonId]);
   const loadingMarathon = useAppSelector(state => state.courses.loadingMarathon);
-  
-  // Check if course has valid access (orderId is not empty)
-  const hasValidAccess = useMemo(() => selectCourseHasValidAccess(marathonId), [marathonId]);
-  const courseHasValidOrder = useAppSelector(hasValidAccess);
 
-  // Fetch marathon data when modal opens - ONLY for owned courses WITH VALID ORDER ID
-  // API requires active order, will return 400 "Order not found!" otherwise
+  // Fetch marathon data when modal opens for owned courses
+  // Backend recognizes demo courses by marathonId automatically
   useEffect(() => {
-    if (isOpen && isOwnedCourse && courseHasValidOrder && marathonId && !marathon) {
+    if (isOpen && isOwnedCourse && marathonId && !marathon) {
       const timeZoneOffset = new Date().getTimezoneOffset();
       dispatch(fetchMarathon({ marathonId, timeZoneOffset }));
     }
-  }, [isOpen, isOwnedCourse, courseHasValidOrder, marathonId, marathon, dispatch]);
+  }, [isOpen, isOwnedCourse, marathonId, marathon, dispatch]);
 
   // Handle day click - navigate to day page
   const handleDayClick = (dayId: string) => {
@@ -351,27 +346,6 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                         {t.trainingProgram}
                       </h3>
                       
-                      {/* Show activation notice for owned courses without valid orderId */}
-                      {isOwnedCourse && !courseHasValidOrder && (
-                        <div className="mb-4 p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <div className="text-2xl">⚠️</div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-amber-900 mb-1">
-                                {language === 'ru' ? 'Требуется активация' : language === 'en' ? 'Activation Required' : 'Activación Requerida'}
-                              </h4>
-                              <p className="text-sm text-amber-800">
-                                {language === 'ru' 
-                                  ? 'Курс доступен в вашем аккаунте, но для просмотра содержимого нажмите "Активировать" ниже.'
-                                  : language === 'en'
-                                  ? 'Course is available in your account, but to view content click "Activate" below.'
-                                  : 'El curso está disponible en tu cuenta, pero para ver el contenido haz clic en "Activar" a continuación.'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
                       <div className="space-y-3">
                         {loadingMarathon ? (
                           // Loading state
@@ -420,21 +394,6 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                               </svg>
                             </button>
                           ))
-                        ) : isOwnedCourse && !courseHasValidOrder ? (
-                          // Course is owned but needs activation (empty orderId)
-                          <div className="flex flex-col items-center justify-center py-8 px-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
-                            <div className="text-4xl mb-3">⚠️</div>
-                            <h4 className="font-semibold text-gray-800 mb-2">
-                              {language === 'ru' ? 'Требуется активация' : language === 'en' ? 'Activation Required' : 'Activación Requerida'}
-                            </h4>
-                            <p className="text-sm text-gray-600 text-center mb-4">
-                              {language === 'ru' 
-                                ? 'Нажмите "Начать курс" чтобы активировать доступ к содержимому'
-                                : language === 'en'
-                                ? 'Click "Start Course" to activate access to content'
-                                : 'Haz clic en "Iniciar Curso" para activar el acceso al contenido'}
-                            </p>
-                          </div>
                         ) : (
                           // Fallback: Show generic days if no marathon data (still clickable)
                           [...Array(course.duration || course.days || 7)].map((_, index) => {
@@ -552,11 +511,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   onClick={onJoin}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  {isOwnedCourse 
-                    ? (courseHasValidOrder 
-                        ? t.startCourse 
-                        : (language === 'ru' ? '🚀 Активировать курс' : language === 'en' ? '🚀 Activate Course' : '🚀 Activar Curso'))
-                    : t.pay}
+                  {isOwnedCourse ? t.startCourse : t.pay}
                 </button>
                 <button
                   onClick={onClose}

@@ -7,8 +7,6 @@ import {
   fetchDemoCourses,
   fetchCourseDetails,
   fetchMarathon,
-  createOrder,
-  purchaseCourse as purchaseCourseAction,
   setSelectedLanguage,
 } from '../store/modules/courses/slice';
 import {
@@ -91,33 +89,10 @@ const CoursesPage: React.FC = () => {
     router.push(`/courses/${marathonId}/day/day-1`);
   };
 
-  const handleJoinCourse = async (courseId: string) => {
-    try {
-      // Create order first
-      const orderResult: any = await dispatch(createOrder(courseId));
-      const orderNumber = orderResult.payload; // API returns plain number like 55569
-      
-      // For free/demo courses, immediately activate
-      // For paid courses, would redirect to payment
-      const isFree = demoCourses.some(c => c.id === courseId) || 
-                     availableCourses.some(c => c.id === courseId && c.isFree);
-      
-      if (isFree) {
-        await dispatch(
-          purchaseCourseAction({
-            orderNumber: String(orderNumber),
-            couponCode: null,
-          })
-        );
-        alert('Курс успешно активирован!');
-      } else {
-        // TODO: Redirect to payment page
-        console.log('Redirect to payment for course:', courseId);
-      }
-    } catch (error) {
-      console.error('Failed to join course:', error);
-      alert('Не удалось присоединиться к курсу');
-    }
+  const handleJoinCourse = (courseId: string) => {
+    // Demo courses are already activated in backend, just navigate
+    setIsModalOpen(false);
+    handleStartCourse(courseId);
   };
 
   // Combine demo and available courses for display
@@ -257,48 +232,9 @@ const CoursesPage: React.FC = () => {
           }}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onJoin={async () => {
-            if (isOwnedCourse) {
-              const marathonId = selectedCourse.wpMarathonId || selectedCourse.marathonId || selectedCourse.id;
-              
-              // Check if course has valid orderId
-              const order = myCoursesWithProgress.find(c => 
-                c.marathonId === marathonId || c.wpMarathonId === marathonId || c.id === marathonId
-              );
-              
-              console.log('Course data:', order);
-              console.log('orderId:', order?.orderId);
-              console.log('marathonId for purchase:', marathonId);
-              
-              if (order && order.orderId === '00000000-0000-0000-0000-000000000000') {
-                // Course needs activation - purchase with marathonId as orderNumber
-                try {
-                  console.log('Attempting to purchase with marathonId:', marathonId);
-                  
-                  // For demo courses, use marathonId as orderNumber
-                  await dispatch(purchaseCourseAction({
-                    orderNumber: marathonId, // Use marathonId for demo courses
-                    couponCode: null,
-                  }));
-                  
-                  // Reload orders to get new orderId
-                  await dispatch(fetchMyOrders());
-                  // Close modal and navigate to first day
-                  setIsModalOpen(false);
-                  handleStartCourse(marathonId);
-                } catch (error) {
-                  console.error('Failed to activate course:', error);
-                  alert('Не удалось активировать курс. Попробуйте позже.');
-                }
-              } else {
-                // Course has valid orderId - go directly to first day
-                handleStartCourse(marathonId);
-                setIsModalOpen(false);
-              }
-            } else {
-              handleJoinCourse(selectedCourse.id);
-              setIsModalOpen(false);
-            }
+          onJoin={() => {
+            const courseId = selectedCourse.wpMarathonId || selectedCourse.marathonId || selectedCourse.id;
+            handleJoinCourse(courseId);
           }}
           isOwnedCourse={isOwnedCourse}
           language={selectedLanguage}
