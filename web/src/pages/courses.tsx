@@ -94,7 +94,8 @@ const CoursesPage: React.FC = () => {
   const handleJoinCourse = async (courseId: string) => {
     try {
       // Create order first
-      const order = await dispatch(createOrder(courseId));
+      const orderResult: any = await dispatch(createOrder(courseId));
+      const orderNumber = orderResult.payload; // API returns plain number like 55569
       
       // For free/demo courses, immediately activate
       // For paid courses, would redirect to payment
@@ -104,7 +105,7 @@ const CoursesPage: React.FC = () => {
       if (isFree) {
         await dispatch(
           purchaseCourseAction({
-            orderNumber: (order as any).payload?.orderNumber,
+            orderNumber: String(orderNumber),
             couponCode: null,
           })
         );
@@ -265,15 +266,18 @@ const CoursesPage: React.FC = () => {
                 c.marathonId === marathonId || c.wpMarathonId === marathonId || c.id === marathonId
               );
               
+              console.log('Course data:', order);
+              console.log('orderId:', order?.orderId);
+              console.log('marathonId for purchase:', marathonId);
+              
               if (order && order.orderId === '00000000-0000-0000-0000-000000000000') {
-                // Course needs activation - create order and purchase it
+                // Course needs activation - purchase with marathonId as orderNumber
                 try {
-                  const orderResult: any = await dispatch(createOrder(marathonId));
-                  const orderNumber = orderResult.payload;
+                  console.log('Attempting to purchase with marathonId:', marathonId);
                   
-                  // Activate the order (purchase with free coupon for demo courses)
+                  // For demo courses, use marathonId as orderNumber
                   await dispatch(purchaseCourseAction({
-                    orderNumber: String(orderNumber),
+                    orderNumber: marathonId, // Use marathonId for demo courses
                     couponCode: null,
                   }));
                   
