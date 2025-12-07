@@ -393,7 +393,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                             </button>
                           ))
                         ) : (
-                          // Fallback: Show generic days if no marathon data
+                          // Fallback: Show generic days if no marathon data (still clickable)
                           [...Array(course.duration || course.days || 7)].map((_, index) => {
                             const dayNumber = index + 1;
                             const exerciseBrief = language === 'ru' 
@@ -401,11 +401,14 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                               : language === 'en'
                               ? 'Exercises and theory'
                               : 'Ejercicios y teoría';
+                            // Generate a temporary dayId for fallback days
+                            const tempDayId = `day-${dayNumber}`;
 
                             return (
-                              <div
+                              <button
                                 key={index}
-                                className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                onClick={() => handleDayClick(tempDayId)}
+                                className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer border-2 border-transparent hover:border-purple-300 text-left"
                               >
                                 <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
                                   {dayNumber}
@@ -418,7 +421,10 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                                     {exerciseBrief}
                                   </p>
                                 </div>
-                              </div>
+                                <svg className="w-5 h-5 text-gray-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
                             );
                           })
                         )}
