@@ -266,12 +266,20 @@ const CoursesPage: React.FC = () => {
               );
               
               if (order && order.orderId === '00000000-0000-0000-0000-000000000000') {
-                // Course needs activation - create order first
+                // Course needs activation - create order and purchase it
                 try {
-                  await dispatch(createOrder(marathonId));
+                  const orderResult: any = await dispatch(createOrder(marathonId));
+                  const orderNumber = orderResult.payload;
+                  
+                  // Activate the order (purchase with free coupon for demo courses)
+                  await dispatch(purchaseCourseAction({
+                    orderNumber: String(orderNumber),
+                    couponCode: null,
+                  }));
+                  
                   // Reload orders to get new orderId
                   await dispatch(fetchMyOrders());
-                  // Then navigate to first day
+                  // Close modal and navigate to first day
                   setIsModalOpen(false);
                   handleStartCourse(marathonId);
                 } catch (error) {

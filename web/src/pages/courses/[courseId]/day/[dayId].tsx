@@ -68,12 +68,18 @@ export default function MarathonDayPage() {
   if (isCoursePurchased && !hasValidAccess && !loading) {
     const handleActivateCourse = async () => {
       try {
-        // Import createOrder and fetchMyOrders actions
-        const { createOrder } = await import('@/store/modules/courses/slice');
-        const { fetchMyOrders } = await import('@/store/modules/courses/slice');
+        // Import actions
+        const { createOrder, purchaseCourse, fetchMyOrders } = await import('@/store/modules/courses/slice');
         
         // Create order for this course
-        await dispatch(createOrder(typeof courseId === 'string' ? courseId : ''));
+        const orderResult: any = await dispatch(createOrder(typeof courseId === 'string' ? courseId : ''));
+        const orderNumber = orderResult.payload;
+        
+        // Activate the order (purchase with free coupon for demo courses)
+        await dispatch(purchaseCourse({
+          orderNumber: String(orderNumber),
+          couponCode: null,
+        }));
         
         // Reload orders to get new orderId
         await dispatch(fetchMyOrders());
