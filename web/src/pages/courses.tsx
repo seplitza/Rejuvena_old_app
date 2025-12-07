@@ -87,8 +87,8 @@ const CoursesPage: React.FC = () => {
   };
 
   const handleStartCourse = (marathonId: string) => {
-    // Navigate to exercises for this marathon
-    router.push(`/course/${marathonId}/exercises`);
+    // Navigate to first day of the marathon
+    router.push(`/courses/${marathonId}/day/day-1`);
   };
 
   const handleJoinCourse = async (courseId: string) => {
