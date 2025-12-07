@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { translations, getRussianPluralForm, type LanguageCode } from '../../utils/i18n';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchMarathon } from '../../store/modules/courses/slice';
@@ -81,6 +82,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'description' | 'program' | 'reviews'>('description');
   const t = translations[language];
   const dispatch = useAppDispatch();
+  const router = useRouter();
   
   // Get marathon data from Redux store
   const marathonId = course.wpMarathonId || course.marathonId || course.id;
@@ -94,6 +96,14 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
       dispatch(fetchMarathon({ marathonId, timeZoneOffset }));
     }
   }, [isOpen, isOwnedCourse, marathonId, marathon, dispatch]);
+
+  // Handle day click - navigate to day page
+  const handleDayClick = (dayId: string) => {
+    if (isOwnedCourse && marathonId) {
+      onClose(); // Close modal before navigation
+      router.push(`/courses/${marathonId}/day/${dayId}`);
+    }
+  };
 
   // Clean description HTML from unwanted content
   const cleanDescription = useMemo(() => {
@@ -346,9 +356,10 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                         ) : marathon && marathon.marathonDays && marathon.marathonDays.length > 0 ? (
                           // Show real day descriptions from API
                           marathon.marathonDays.map((day) => (
-                            <div
+                            <button
                               key={day.id}
-                              className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                              onClick={() => handleDayClick(day.id)}
+                              className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer border-2 border-transparent hover:border-purple-300 text-left"
                             >
                               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
                                 {day.day}
@@ -376,7 +387,10 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                                   </div>
                                 </div>
                               )}
-                            </div>
+                              <svg className="w-5 h-5 text-gray-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
                           ))
                         ) : (
                           // Fallback: Show generic days if no marathon data
