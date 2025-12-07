@@ -54,18 +54,37 @@ export default function MarathonDayPage() {
   }
 
   if (error) {
+    // Check if error is "Order not found" - means user doesn't own this course
+    const isOrderNotFound = error.includes('Order not found') || error.includes('400');
+    
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="text-6xl mb-4">😞</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Ошибка загрузки</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Вернуться назад
-          </button>
+          <div className="text-6xl mb-4">{isOrderNotFound ? '🔒' : '😞'}</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {isOrderNotFound ? 'Курс недоступен' : 'Ошибка загрузки'}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {isOrderNotFound 
+              ? 'Этот курс доступен только после покупки. Вернитесь на страницу курсов и приобретите курс, чтобы получить доступ к его содержимому.'
+              : error}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => router.push('/courses')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              {isOrderNotFound ? 'К курсам' : 'Вернуться'}
+            </button>
+            {isOrderNotFound && (
+              <button
+                onClick={() => router.back()}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Назад
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

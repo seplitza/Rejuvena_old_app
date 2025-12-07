@@ -89,7 +89,8 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   const marathon = useAppSelector(state => state.courses.marathons[marathonId]);
   const loadingMarathon = useAppSelector(state => state.courses.loadingMarathon);
 
-  // Fetch marathon data when modal opens and course is owned
+  // Fetch marathon data when modal opens - ONLY for owned courses
+  // API requires active order, will return 400 "Order not found!" otherwise
   useEffect(() => {
     if (isOpen && isOwnedCourse && marathonId && !marathon) {
       const timeZoneOffset = new Date().getTimezoneOffset();
