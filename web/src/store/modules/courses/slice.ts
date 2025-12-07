@@ -22,6 +22,7 @@ export interface Course {
 export interface Order {
   id: string;
   orderId: string;
+  orderNumber?: number; // Numeric order ID from backend (e.g., 55291)
   title: string;
   subTitle: string;
   description?: string;

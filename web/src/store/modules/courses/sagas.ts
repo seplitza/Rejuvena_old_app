@@ -53,6 +53,21 @@ function* fetchMyOrdersSaga(): Generator<any, void, any> {
 
     // API returns { currentCourses, availableCourses, archives }
     const orders = response.currentCourses || [];
+    
+    // Log full order data to see what fields are available
+    console.log('📦 Full orders from backend:', JSON.stringify(orders, null, 2));
+    orders.forEach((order: any, index: number) => {
+      console.log(`Order #${index + 1}:`, {
+        id: order.id,
+        orderId: order.orderId,
+        orderNumber: order.orderNumber,
+        title: order.title,
+        marathonId: order.marathonId,
+        wpMarathonId: order.wpMarathonId,
+        allKeys: Object.keys(order)
+      });
+    });
+    
     yield put(setMyOrders(orders));
   } catch (error: any) {
     console.error('Failed to fetch orders:', error);
