@@ -53,6 +53,16 @@ export interface Order {
   autoRenewal?: boolean;
 }
 
+export interface MarathonDay {
+  id: string;
+  day: number;
+  description: string;
+  dayDate: string;
+  progress: number;
+  isCompleted: boolean;
+  isLocked: boolean;
+}
+
 export interface Marathon {
   marathonId: string;
   title: string;
@@ -64,6 +74,8 @@ export interface Marathon {
   totalDays: number;
   completedDays: number;
   progress: number;
+  marathonDays: MarathonDay[]; // Added: days with descriptions
+  greatExtensionDays?: MarathonDay[]; // Added: practice days
 }
 
 export interface CourseDetail {

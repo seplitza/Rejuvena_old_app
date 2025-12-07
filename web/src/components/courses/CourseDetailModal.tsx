@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { translations, getRussianPluralForm, type LanguageCode } from '../../utils/i18n';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMarathon } from '../../store/modules/courses/slice';
 
 interface CourseDetailModalProps {
   course: any;
@@ -78,6 +80,20 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'description' | 'program' | 'reviews'>('description');
   const t = translations[language];
+  const dispatch = useAppDispatch();
+  
+  // Get marathon data from Redux store
+  const marathonId = course.wpMarathonId || course.marathonId || course.id;
+  const marathon = useAppSelector(state => state.courses.marathons[marathonId]);
+  const loadingMarathon = useAppSelector(state => state.courses.loadingMarathon);
+
+  // Fetch marathon data when modal opens and course is owned
+  useEffect(() => {
+    if (isOpen && isOwnedCourse && marathonId && !marathon) {
+      const timeZoneOffset = new Date().getTimezoneOffset();
+      dispatch(fetchMarathon({ marathonId, timeZoneOffset }));
+    }
+  }, [isOpen, isOwnedCourse, marathonId, marathon, dispatch]);
 
   // Clean description HTML from unwanted content
   const cleanDescription = useMemo(() => {
@@ -319,35 +335,79 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                         {t.trainingProgram}
                       </h3>
                       <div className="space-y-3">
-                        {[...Array(course.duration || course.days || 7)].map((_, index) => {
-                          // TODO: В будущем можно добавить загрузку описаний дней через API /usermarathon/getdayexercise
-                          // Пока показываем базовую информацию
-                          const dayNumber = index + 1;
-                          const exerciseBrief = language === 'ru' 
-                            ? 'Упражнения и теория'
-                            : language === 'en'
-                            ? 'Exercises and theory'
-                            : 'Ejercicios y teoría';
-
-                          return (
+                        {loadingMarathon ? (
+                          // Loading state
+                          <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                            <span className="ml-3 text-gray-600">
+                              {language === 'ru' ? 'Загрузка программы...' : language === 'en' ? 'Loading program...' : 'Cargando programa...'}
+                            </span>
+                          </div>
+                        ) : marathon && marathon.marathonDays && marathon.marathonDays.length > 0 ? (
+                          // Show real day descriptions from API
+                          marathon.marathonDays.map((day) => (
                             <div
-                              key={index}
+                              key={day.id}
                               className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                             >
                               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
-                                {dayNumber}
+                                {day.day}
                               </div>
                               <div className="flex-1">
                                 <h4 className="font-medium text-gray-900">
-                                  {t.dayLabel} {dayNumber}
+                                  {t.dayLabel} {day.day}
                                 </h4>
-                                <p className="text-sm text-gray-600">
-                                  {exerciseBrief}
+                                <p className="text-sm text-gray-600 line-clamp-2">
+                                  {day.description || (language === 'ru' 
+                                    ? 'Упражнения и теория'
+                                    : language === 'en'
+                                    ? 'Exercises and theory'
+                                    : 'Ejercicios y teoría')}
                                 </p>
                               </div>
+                              {day.progress > 0 && (
+                                <div className="flex-shrink-0 ml-3">
+                                  <div className="flex items-center">
+                                    {[...Array(Math.ceil(day.progress / 20))].map((_, i) => (
+                                      <svg key={i} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          );
-                        })}
+                          ))
+                        ) : (
+                          // Fallback: Show generic days if no marathon data
+                          [...Array(course.duration || course.days || 7)].map((_, index) => {
+                            const dayNumber = index + 1;
+                            const exerciseBrief = language === 'ru' 
+                              ? 'Упражнения и теория'
+                              : language === 'en'
+                              ? 'Exercises and theory'
+                              : 'Ejercicios y teoría';
+
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                              >
+                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                                  {dayNumber}
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-gray-900">
+                                    {t.dayLabel} {dayNumber}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {exerciseBrief}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
 
