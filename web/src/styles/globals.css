@@ -31,3 +31,33 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* Hide Froala Editor watermark/branding */
+.fr-wrapper a[href*="froala"],
+.fr-wrapper div[data-f-id],
+a[href*="froala.com"],
+a[title*="Froala"],
+*[data-f-id="pbf"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide any element containing "Powered by Froala Editor" text */
+*:not(script):not(style) {
+  &:has-text("Powered by Froala Editor") {
+    display: none !important;
+  }
+}
+
+/* Additional Froala branding removal */
+.fr-box.fr-basic .fr-wrapper::after,
+.fr-box .fr-wrapper a.fr-floating-btn,
+div[style*="froala"],
+*[class*="fr-powered-by"] {
+  display: none !important;
+}

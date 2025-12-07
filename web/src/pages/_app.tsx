@@ -30,6 +30,58 @@ function App({ Component, pageProps }: AppProps) {
     };
     
     initAuth();
+
+    // Hide Froala Editor watermark using JavaScript
+    const hideFroalaWatermark = () => {
+      // Remove Froala watermark elements
+      const selectors = [
+        'a[href*="froala"]',
+        '*[data-f-id]',
+        'a[title*="Froala"]',
+        '*[data-f-id="pbf"]',
+        '.fr-wrapper a.fr-floating-btn'
+      ];
+      
+      selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          (el as HTMLElement).style.display = 'none';
+          el.remove();
+        });
+      });
+
+      // Remove text nodes containing "Powered by Froala Editor"
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      const nodesToRemove: HTMLElement[] = [];
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.textContent && /Powered\s*by\s*Froala\s*Editor/i.test(node.textContent)) {
+          const parent = node.parentElement;
+          if (parent) {
+            nodesToRemove.push(parent);
+          }
+        }
+      }
+      nodesToRemove.forEach(n => n.remove());
+    };
+
+    // Run immediately after mount
+    hideFroalaWatermark();
+
+    // Run on mutations
+    const observer = new MutationObserver(hideFroalaWatermark);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => {
+      observer.disconnect();
+    };
   }, [dispatch]);
 
   return <Component {...pageProps} />;
