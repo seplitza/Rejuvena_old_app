@@ -192,12 +192,12 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
 
     console.log('✅ Order created with number:', orderNumber);
     
-    // Auto-activate free courses
+    // Auto-activate free courses (empty string for couponCode, not null)
     const timeZoneOffset = getTimeZoneOffset();
     yield call(
       request.get,
       endpoints.purchase_marathon_by_coupon,
-      { params: { orderNumber: orderNumber.toString(), couponCode: null, timeZoneOffset } }
+      { params: { orderNumber: orderNumber.toString(), couponCode: '', timeZoneOffset } }
     );
     
     console.log('✅ Course activated successfully');
@@ -208,6 +208,7 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
     return orderNumber;
   } catch (error: any) {
     console.error('❌ Failed to create/activate order:', error);
+    console.error('Error details:', error.response?.data || error.message);
     yield put(setOrdersError(error.message || 'Failed to create order'));
     throw error;
   }
