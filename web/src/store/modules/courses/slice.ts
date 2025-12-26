@@ -117,6 +117,7 @@ interface CoursesState {
   myOrders: Order[];
   loadingOrders: boolean;
   ordersError: string | null;
+  activatingOrderId: string | null; // Track which order is being activated
 
   // Available courses (same structure as Order from API)
   availableCourses: Order[];
@@ -143,6 +144,7 @@ const initialState: CoursesState = {
   myOrders: [],
   loadingOrders: false,
   ordersError: null,
+  activatingOrderId: null,
 
   availableCourses: [],
   demoCourses: [],
@@ -169,6 +171,9 @@ const coursesSlice = createSlice({
       state.myOrders = action.payload;
       state.loadingOrders = false;
       state.ordersError = null;
+    },
+    setActivatingOrderId(state, action: PayloadAction<string | null>) {
+      state.activatingOrderId = action.payload;
     },
     updateOrderNumber(state, action: PayloadAction<{ wpMarathonId: string; orderNumber: number }>) {
       const order = state.myOrders.find(o => o.wpMarathonId === action.payload.wpMarathonId);
