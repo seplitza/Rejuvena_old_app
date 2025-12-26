@@ -100,23 +100,16 @@ const CoursesPage: React.FC = () => {
 
   const handleJoinCourse = (courseId: string) => {
     // Find course in my courses (they already have wpMarathonId)
-    const course = myCoursesWithProgress.find(c => 
+    const myCourse = myCoursesWithProgress.find(c => 
       c.id === courseId || c.wpMarathonId === courseId || c.marathonId === courseId
     );
     
-    if (!course) {
-      // Not in my courses, just navigate
-      setIsModalOpen(false);
-      handleStartCourse(courseId);
-      return;
-    }
-
-    // Check if course needs activation (orderNumber is null - not yet purchased properly)
-    if (course.orderNumber === null && course.wpMarathonId) {
-      console.log('🚀 Course needs activation, creating and activating order for:', course.title);
+    // If found in my courses and it's free (cost=0), activate and navigate
+    if (myCourse && myCourse.isFree && myCourse.orderNumber === null && myCourse.wpMarathonId) {
+      console.log('🚀 Free course needs activation:', myCourse.title);
       
       // Create order and auto-activate (saga handles this)
-      dispatch(createOrder(course.wpMarathonId));
+      dispatch(createOrder(myCourse.wpMarathonId));
       
       // Close modal and show message
       setIsModalOpen(false);
@@ -124,13 +117,30 @@ const CoursesPage: React.FC = () => {
       
       // Auto-navigate after 2 seconds
       setTimeout(() => {
-        router.push(`/courses/${course.wpMarathonId || courseId}/day/day-1`);
+        router.push(`/courses/${myCourse.wpMarathonId || courseId}/day/day-1`);
       }, 2000);
       return;
     }
     
-    setIsModalOpen(false);
-    handleStartCourse(course.wpMarathonId || courseId);
+    // If in my courses and already activated, navigate
+    if (myCourse && myCourse.orderNumber !== null) {
+      setIsModalOpen(false);
+      handleStartCourse(myCourse.wpMarathonId || courseId);
+      return;
+    }
+    
+    // Not owned or paid course - show modal with payment details
+    console.log('Fetching course details for:', courseId, 'isOwned:', !!myCourse, 'course:', myCourse);
+    const availableCourse = [...availableCourses, ...demoCourses].find(c => 
+      c.id === courseId || c.wpMarathonId === courseId
+    );
+    
+    if (availableCourse) {
+      dispatch(fetchCourseDetails(availableCourse.wpMarathonId || courseId));
+      setSelectedCourse(availableCourse);
+      setIsOwnedCourse(false);
+      setIsModalOpen(true);
+    }
   };
 
   // Combine demo and available courses for display

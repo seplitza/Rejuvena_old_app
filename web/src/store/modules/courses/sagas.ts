@@ -207,7 +207,7 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
       endpoints.purchase_marathon_by_coupon,
       { params: { 
         orderNumber: orderNumber.toString(), 
-        couponCode: null,  // Required parameter, null for courses without coupon
+        couponCode: '',  // Empty string to ensure param is included in URL
         timeZoneOffset 
       }}
     );
