@@ -81,16 +81,11 @@ const CoursesPage: React.FC = () => {
     if (course && course.orderNumber === null && course.wpMarathonId) {
       console.log('🚀 Course needs activation before starting:', course.title);
       
-      // Create order and auto-activate (saga handles this)
+      // Create order and auto-activate (saga handles this in background)
       dispatch(createOrder(course.wpMarathonId));
       
-      // Show message and auto-navigate after activation completes
-      alert('Активируем курс... Сейчас откроется страница курса.');
-      
-      // Auto-navigate after 2 seconds (enough time for saga to complete)
-      setTimeout(() => {
-        router.push(`/courses/${marathonId}/day/day-1`);
-      }, 2000);
+      // Navigate immediately - activation happens in background
+      router.push(`/courses/${marathonId}/day/day-1`);
       return;
     }
     
@@ -108,17 +103,12 @@ const CoursesPage: React.FC = () => {
     if (myCourse && myCourse.isFree && myCourse.orderNumber === null && myCourse.wpMarathonId) {
       console.log('🚀 Free course needs activation:', myCourse.title);
       
-      // Create order and auto-activate (saga handles this)
+      // Create order and auto-activate (saga handles this in background)
       dispatch(createOrder(myCourse.wpMarathonId));
       
-      // Close modal and show message
+      // Close modal and navigate immediately
       setIsModalOpen(false);
-      alert('Активируем курс... Сейчас откроется страница курса.');
-      
-      // Auto-navigate after 2 seconds
-      setTimeout(() => {
-        router.push(`/courses/${myCourse.wpMarathonId || courseId}/day/day-1`);
-      }, 2000);
+      router.push(`/courses/${myCourse.wpMarathonId || courseId}/day/day-1`);
       return;
     }
     
