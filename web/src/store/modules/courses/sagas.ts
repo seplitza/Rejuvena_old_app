@@ -201,15 +201,24 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
     // CRITICAL: Always call purchasemarathon to create order in database
     // Both paid and free courses need this step
     const timeZoneOffset = getTimeZoneOffset();
-    console.log(`💳 Activating course (cost=${course?.cost || 0}) with purchasemarathon...`);
+    const isFree = !course || course.cost === 0 || course.isFree;
+    console.log(`💳 Activating course (cost=${course?.cost || 0}, isFree=${isFree}) with purchasemarathon...`);
+    
+    // For free courses, don't include couponCode parameter at all
+    const params: any = { 
+      orderNumber: orderNumber.toString(), 
+      timeZoneOffset 
+    };
+    
+    // Only add couponCode for paid courses
+    if (!isFree) {
+      params.couponCode = '';
+    }
+    
     yield call(
       request.get,
       endpoints.purchase_marathon_by_coupon,
-      { params: { 
-        orderNumber: orderNumber.toString(), 
-        couponCode: '',  // Empty string to ensure param is included in URL
-        timeZoneOffset 
-      }}
+      { params }
     );
     console.log('✅ Course activated successfully');
     
