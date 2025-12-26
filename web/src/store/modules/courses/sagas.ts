@@ -204,15 +204,15 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
     const isFree = !course || course.cost === 0 || course.isFree;
     console.log(`💳 Activating course (cost=${course?.cost || 0}, isFree=${isFree}) with purchasemarathon...`);
     
-    // IMPORTANT: Mobile app passes couponCode: null for free courses
-    // This is correct behavior - API expects this parameter
+    // IMPORTANT: Axios ignores null params, must use empty string
+    // API expects couponCode parameter even for free courses (as empty string)
     yield call(
       request.get,
       endpoints.purchase_marathon_by_coupon,
       { 
         params: {
           orderNumber: orderNumber.toString(),
-          couponCode: null, // null for free courses, same as mobile app
+          couponCode: '', // Empty string for all courses (Axios would skip null)
           timeZoneOffset
         }
       }
