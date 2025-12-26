@@ -107,7 +107,7 @@ function VideoPlayer({ video }: { video: VideoEmbed }) {
             href={video.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline break-all"
+            className="text-[#F79700] hover:underline break-all"
           >
             {video.url}
           </a>

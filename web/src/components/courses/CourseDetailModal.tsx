@@ -224,7 +224,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
 
           <div className="overflow-y-auto max-h-[90vh]">
             {/* Header with Image */}
-            <div className="relative h-64 bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+            <div className="relative h-64 bg-gradient-to-br from-[#7B8CDE] to-[#9999C3] flex items-center justify-center">
               <div className={`w-40 h-40 bg-white flex items-center justify-center shadow-2xl overflow-hidden ${
                 course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[20px]'
               }`}>
@@ -260,7 +260,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     onClick={() => setActiveTab('description')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'description'
-                        ? 'border-blue-500 text-blue-600'
+                        ? 'border-[#F79700] text-[#F79700]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -270,7 +270,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     onClick={() => setActiveTab('program')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'program'
-                        ? 'border-blue-500 text-blue-600'
+                        ? 'border-[#F79700] text-[#F79700]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -280,7 +280,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     onClick={() => setActiveTab('reviews')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'reviews'
-                        ? 'border-blue-500 text-blue-600'
+                        ? 'border-[#F79700] text-[#F79700]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -297,7 +297,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                       className="text-gray-700 leading-relaxed mb-4"
                       dangerouslySetInnerHTML={{ __html: cleanDescription }}
                     />
-                    <div className="bg-blue-50 rounded-lg p-6 mt-6">
+                    <div className="bg-[#7B8CDE]/5 rounded-lg p-6 mt-6">
                       <h3 className="text-lg font-semibold text-[#1e3a8a] mb-4">
                         {t.whatYouGet}
                       </h3>
@@ -325,12 +325,12 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                           </div>
                         ))}
                         
-                        <div className="mt-4 pt-4 border-t border-blue-200">
+                        <div className="mt-4 pt-4 border-t border-[#7B8CDE]/20">
                           <p className="flex items-start text-sm text-gray-700">
-                            <svg className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-5 w-5 text-[#F79700] mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
                             </svg>
-                            <span>{t.communitySupport} <a href="https://t.me/seplitza_support" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://t.me/seplitza_support</a></span>
+                            <span>{t.communitySupport} <a href="https://t.me/seplitza_support" target="_blank" rel="noopener noreferrer" className="text-[#F79700] hover:underline">https://t.me/seplitza_support</a></span>
                           </p>
                         </div>
                       </div>
@@ -361,9 +361,9 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                             <button
                               key={day.id}
                               onClick={() => handleDayClick(day.id)}
-                              className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer border-2 border-transparent hover:border-purple-300 text-left"
+                              className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-[#7B8CDE]/10 transition-colors cursor-pointer border-2 border-transparent hover:border-[#7B8CDE] text-left"
                             >
-                              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#7B8CDE] to-[#9999C3] rounded-full flex items-center justify-center text-white font-bold mr-4">
                                 {day.day}
                               </div>
                               <div className="flex-1">
@@ -410,9 +410,9 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                               <button
                                 key={index}
                                 onClick={() => handleDayClick(tempDayId)}
-                                className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer border-2 border-transparent hover:border-purple-300 text-left"
+                                className="w-full flex items-center p-4 bg-gray-50 rounded-lg hover:bg-[#7B8CDE]/10 transition-colors cursor-pointer border-2 border-transparent hover:border-[#7B8CDE] text-left"
                               >
-                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#7B8CDE] to-[#9999C3] rounded-full flex items-center justify-center text-white font-bold mr-4">
                                   {dayNumber}
                                 </div>
                                 <div className="flex-1">
@@ -434,15 +434,15 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     </div>
 
                     {/* Practice Section */}
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200">
+                    <div className="bg-gradient-to-r from-[#7B8CDE]/5 to-[#9999C3]/5 rounded-xl p-6 border-2 border-[#7B8CDE]/30">
                       <div className="flex items-start mb-4">
-                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mr-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#7B8CDE] to-[#9999C3] rounded-full flex items-center justify-center mr-3">
                           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-bold text-purple-700 mb-2">
+                          <h3 className="text-lg font-bold text-[#7B8CDE] mb-2">
                             {t.practiceSection}
                           </h3>
                           <p className="text-gray-700 mb-3">
@@ -493,11 +493,11 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
 
               {/* Price and Action */}
               {!course.isFree && (
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-6">
+                <div className="bg-gradient-to-r from-[#7B8CDE]/5 to-[#9999C3]/5 rounded-xl p-6 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">{t.cost}</p>
-                      <p className="text-3xl font-bold text-[#1e3a8a]">
+                      <p className="text-3xl font-bold text-[#7B8CDE]">
                         {language === 'ru' ? 'от' : language === 'en' ? 'from' : 'desde'} {course.priceFrom?.toLocaleString(language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'es-ES')} {course.currency}
                       </p>
                     </div>
@@ -509,7 +509,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
               <div className="flex gap-4">
                 <button
                   onClick={onJoin}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="flex-1 bg-gradient-to-r from-[#7B8CDE] to-[#9999C3] hover:from-[#6a7acc] hover:to-[#8888b2] text-white font-bold py-4 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {isOwnedCourse ? t.startCourse : t.pay}
                 </button>

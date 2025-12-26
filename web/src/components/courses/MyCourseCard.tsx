@@ -29,7 +29,7 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, language, onStart, 
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
       {/* Header с иконкой */}
-      <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+      <div className="relative h-48 bg-gradient-to-br from-[#7B8CDE]/20 to-[#9999C3]/20 flex items-center justify-center">
         {/* Изображение курса: круглое для Marathon, квадратное для Course */}
         <div className={`w-32 h-32 bg-white flex items-center justify-center shadow-lg overflow-hidden ${
           course.productType?.toLowerCase().includes('marathon') ? 'rounded-full' : 'rounded-[20px]'
@@ -82,7 +82,7 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, language, onStart, 
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-purple-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-[#7B8CDE] to-[#9999C3] h-2 rounded-full transition-all duration-500"
               style={{ width: `${course.progress}%` }}
             />
           </div>
@@ -92,13 +92,13 @@ const MyCourseCard: React.FC<MyCourseCardProps> = ({ course, language, onStart, 
         <div className="flex gap-3">
           <button
             onClick={onStart}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase"
+            className="flex-1 bg-gradient-to-r from-[#7B8CDE] to-[#9999C3] hover:from-[#6a7acc] hover:to-[#8888b2] text-white font-bold py-3 px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase"
           >
             {t.start}
           </button>
           <button
             onClick={onLearnMore}
-            className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] font-bold py-3 px-4 rounded-full hover:bg-blue-50 transition-all duration-300 text-sm uppercase"
+            className="flex-1 bg-white border-2 border-[#7B8CDE] text-[#7B8CDE] font-bold py-3 px-4 rounded-full hover:bg-[#7B8CDE]/5 transition-all duration-300 text-sm uppercase"
           >
             {t.learnMore}
           </button>
