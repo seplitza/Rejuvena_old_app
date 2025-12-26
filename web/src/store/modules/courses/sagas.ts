@@ -193,12 +193,12 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
 
     console.log('✅ Order created with number:', orderNumber);
     
-    // Auto-activate free courses (empty string for couponCode, not null)
+    // Auto-activate free courses (omit couponCode parameter entirely for free courses)
     const timeZoneOffset = getTimeZoneOffset();
     yield call(
       request.get,
       endpoints.purchase_marathon_by_coupon,
-      { params: { orderNumber: orderNumber.toString(), couponCode: '', timeZoneOffset } }
+      { params: { orderNumber: orderNumber.toString(), timeZoneOffset } }
     );
     
     console.log('✅ Course activated successfully');
