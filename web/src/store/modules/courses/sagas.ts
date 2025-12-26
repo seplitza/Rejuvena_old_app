@@ -213,15 +213,6 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
       console.log('🎁 Free demo course (cost=0), skipping purchasemarathon - auto-activated');
     }
     
-    // CRITICAL: Start the marathon (required before accessing day content)
-    console.log('🚀 Starting marathon...');
-    yield call(
-      request.get,
-      endpoints.get_start_marathon,
-      { params: { marathonId, timeZoneOffset } }
-    );
-    console.log('✅ Marathon started successfully');
-    
     // IMPORTANT: Update orderNumber in Redux immediately (don't wait for backend refresh)
     yield put(updateOrderNumber({ wpMarathonId: marathonId, orderNumber }));
     

@@ -35,6 +35,22 @@ function* getDayExerciseSaga(
     yield put(getDayExerciseRequest());
     
     const { marathonId, dayId } = action.payload;
+    const timeZoneOffset = getTimezoneOffset();
+    
+    // CRITICAL: Must call StartMarathon before GetDayExercise
+    // This initializes the marathon for the user
+    console.log('🚀 Starting marathon before loading exercises...');
+    yield call(
+      request.get,
+      endpoints.get_start_marathon,
+      {
+        params: {
+          marathonId,
+          timeZoneOffset,
+        },
+      }
+    );
+    console.log('✅ Marathon started, now loading exercises...');
     
     const response: DayExerciseResponse = yield call(
       request.get,
@@ -43,7 +59,7 @@ function* getDayExerciseSaga(
         params: {
           marathonId,
           dayId,
-          timeZoneOffset: getTimezoneOffset(),
+          timeZoneOffset,
         },
       }
     );
