@@ -205,21 +205,30 @@ function* createOrderSaga(action: PayloadAction<string>): Generator<any, any, an
     // CRITICAL: Always call purchasemarathon to create order in database
     // Both paid and free courses need this step
     const timeZoneOffset = getTimeZoneOffset();
-    const isFree = !course || course.cost === 0 || course.isFree;
-    console.log(`💳 Activating course (cost=${course?.cost || 0}, isFree=${isFree}) with purchasemarathon...`);
+    const isTrulyFree = !course || course.cost === 0;
+    const hasRealCoupon = course?.coupon && course.coupon.length > 0;
     
-    // IMPORTANT: Axios ignores null params, must use empty string
-    // API expects couponCode parameter even for free courses (as empty string)
+    console.log(`💳 Activating course (cost=${course?.cost || 0}, isFree=${course?.isFree}, coupon=${course?.coupon || 'none'})...`);
+    
+    // Build params: only add couponCode if truly free (cost=0) or has real coupon
+    const params: any = {
+      orderNumber: orderNumber.toString(),
+      timeZoneOffset
+    };
+    
+    if (isTrulyFree) {
+      // Truly free course (cost=0) - send empty couponCode
+      params.couponCode = '';
+    } else if (hasRealCoupon) {
+      // Paid course with coupon - send the coupon
+      params.couponCode = course.coupon;
+    }
+    // Otherwise: paid course without coupon - don't send couponCode at all
+    
     yield call(
       request.get,
       endpoints.purchase_marathon_by_coupon,
-      { 
-        params: {
-          orderNumber: orderNumber.toString(),
-          couponCode: '', // Empty string for all courses (Axios would skip null)
-          timeZoneOffset
-        }
-      }
+      { params }
     );
     console.log('✅ Course activated successfully');
     
