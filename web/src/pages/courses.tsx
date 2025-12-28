@@ -94,8 +94,8 @@ const CoursesPage: React.FC = () => {
     if (course && course.orderNumber === null && course.wpMarathonId) {
       console.log('🚀 Course needs activation before starting:', course.title);
       
-      // Set pending navigation destination
-      setPendingNavigationTo(`/courses/${marathonId}/day/day-1`);
+      // Set pending navigation destination - saga will resolve current day
+      setPendingNavigationTo(`/courses/${marathonId}/day/current`);
       
       // Create order and auto-activate in background
       // When saga completes, useEffect will trigger navigation
@@ -103,8 +103,9 @@ const CoursesPage: React.FC = () => {
       return;
     }
     
-    // Already activated - navigate immediately
-    router.push(`/courses/${marathonId}/day/day-1`);
+    // Already activated - navigate to current day
+    // Day saga will fetch marathon structure and resolve 'current' to actual day ID
+    router.push(`/courses/${marathonId}/day/current`);
   };
 
   const handleJoinCourse = (courseId: string) => {
@@ -117,7 +118,8 @@ const CoursesPage: React.FC = () => {
     if (myCourse && myCourse.isFree && myCourse.orderNumber === null && myCourse.wpMarathonId) {
       console.log('🚀 Free course needs activation:', myCourse.title);
       
-      // Set pending navigation destination
+      // Set pending navigation destination - will fetch current day after activation
+      setPendingNavigationTo(`/courses/${courseId}/current`);
       setPendingNavigationTo(`/courses/${myCourse.wpMarathonId || courseId}/day/day-1`);
       
       // Create order and auto-activate in background

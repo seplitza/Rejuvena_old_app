@@ -52,21 +52,42 @@ function* getDayExerciseSaga(
     );
     console.log('✅ Marathon started, marathon data:', marathonData);
     
-    // Extract day number from dayId (e.g., "day-1" -> 1)
-    const dayNumber = parseInt(dayId.replace('day-', ''), 10);
-    console.log(`📅 Looking for day #${dayNumber} in marathon days...`);
+    let actualDayId = dayId;
     
-    // Find the actual day ID (GUID) from marathon days
-    const marathonDays = marathonData?.marathonDays || [];
-    const dayData = marathonDays.find((d: any) => d.day === dayNumber);
-    
-    if (!dayData) {
-      throw new Error(`Day ${dayNumber} not found in marathon`);
+    // Handle special cases: 'current', 'day-1', 'day-2', etc.
+    if (dayId === 'current' || dayId.startsWith('day-')) {
+      const allDays = [
+        ...(marathonData.marathonDays || []),
+        ...(marathonData.greatExtensionDays || []),
+      ];
+      
+      if (dayId === 'current') {
+        // Current day is the last published day
+        const currentDay = allDays[allDays.length - 1];
+        if (currentDay && currentDay.id) {
+          actualDayId = currentDay.id;
+          console.log('📍 Current day is:', currentDay.day, 'with ID:', actualDayId);
+        } else {
+          throw new Error('No current day found in marathon');
+        }
+      } else {
+        // Extract day number from 'day-N' format
+        const dayNumber = parseInt(dayId.replace('day-', ''), 10);
+        console.log(`📅 Looking for day #${dayNumber} in marathon days...`);
+        
+        // Find the actual day ID (GUID) from marathon days
+        const dayData = allDays.find((d: any) => d.day === dayNumber);
+        
+        if (!dayData) {
+          throw new Error(`Day ${dayNumber} not found in marathon`);
+        }
+        
+        actualDayId = dayData.id;
+        console.log(`✅ Found day ${dayNumber} with ID: ${actualDayId}`);
+      }
     }
     
-    const actualDayId = dayData.id;
-    console.log(`✅ Found day ${dayNumber} with ID: ${actualDayId}`);
-    console.log('🔄 Now loading exercises...');
+    console.log('🔄 Now loading exercises for day ID:', actualDayId);
     
     const response: DayExerciseResponse = yield call(
       request.get,
@@ -74,7 +95,7 @@ function* getDayExerciseSaga(
       {
         params: {
           marathonId,
-          dayId: actualDayId,  // Use GUID, not slug
+          dayId: actualDayId,  // Use resolved GUID
           timeZoneOffset,
         },
       }
