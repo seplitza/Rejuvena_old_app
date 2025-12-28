@@ -3,8 +3,10 @@
  * Displays list of all marathon days with star ratings
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/router';
+import { useAppSelector } from '@/store/hooks';
+import { selectMarathonData } from '@/store/modules/day/selectors';
 
 interface MarathonDay {
   id: string;
@@ -44,11 +46,11 @@ const getRatingFromProgress = (progress: number = 0): number => {
  */
 const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
   return (
-    <div className="flex items-center space-x-0.5">
+    <div className="flex items-center justify-center space-x-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-4 h-4 ${
+          className={`w-3 h-3 ${
             star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
           }`}
           viewBox="0 0 20 20"
@@ -62,54 +64,16 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
 
 export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
   const router = useRouter();
-  const [marathonDays, setMarathonDays] = useState<MarathonDay[]>([]);
-  const [greatExtensionDays, setGreatExtensionDays] = useState<MarathonDay[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch marathon structure to get all days
-  useEffect(() => {
-    const fetchDays = async () => {
-      try {
-        const timeZoneOffset = new Date().getTimezoneOffset();
-        const response = await fetch(
-          `https://new-facelift-service-b8cta5hpgcgqf8c7.eastus-01.azurewebsites.net/api/usermarathon/startmarathon?marathonId=${marathonId}&timeZoneOffset=${timeZoneOffset}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('📋 Days list data:', data);
-          
-          setMarathonDays(data.marathonDays || []);
-          setGreatExtensionDays(data.greatExtensionDays || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch days list:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (marathonId) {
-      fetchDays();
-    }
-  }, [marathonId]);
+  
+  // Use marathon data from Redux (already loaded by saga)
+  const marathonData = useAppSelector(selectMarathonData);
+  
+  const marathonDays = marathonData?.marathonDays || [];
+  const greatExtensionDays = marathonData?.greatExtensionDays || [];
 
   const handleDayClick = (dayId: string) => {
     router.push(`/courses/${marathonId}/day/${dayId}`);
   };
-
-  if (loading) {
-    return (
-      <div className="mt-8 text-center text-gray-500">
-        <div className="animate-pulse">Загрузка дней...</div>
-      </div>
-    );
-  }
 
   const allDays = [...marathonDays, ...greatExtensionDays];
 

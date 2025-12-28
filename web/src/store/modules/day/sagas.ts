@@ -52,6 +52,16 @@ function* getDayExerciseSaga(
     );
     console.log('✅ Marathon started, marathon data:', marathonData);
     
+    // Save marathon data to Redux for DaysList component
+    yield put({
+      type: 'day/setMarathonData',
+      payload: {
+        marathonDays: marathonData.marathonDays || [],
+        greatExtensionDays: marathonData.greatExtensionDays || [],
+        oldGreatExtensions: marathonData.oldGreatExtensions || [],
+      },
+    });
+    
     let actualDayId = dayId;
     
     // Handle special cases: 'current', 'day-1', 'day-2', etc.
@@ -124,14 +134,14 @@ function* changeExerciseStatusSaga(
     // Mark as changing
     yield put(addChangingStatusRequest(uniqueId));
     
-    // Call API
+    // Call API (status is boolean - true/false)
     yield call(
       request.post,
       endpoints.change_exercise_status,
       {
         dayId,
         marathonExerciseId,
-        status: status ? 'Completed' : 'NotStarted',
+        status,
       }
     );
     
