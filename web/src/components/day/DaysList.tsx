@@ -70,6 +70,11 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
   
   const marathonDays = marathonData?.marathonDays || [];
   const greatExtensionDays = marathonData?.greatExtensionDays || [];
+  
+  // Debug logging
+  console.log('📋 DaysList - Current day ID:', currentDayId);
+  console.log('📋 DaysList - Marathon days:', marathonDays.map((d: any) => ({ id: d.id, day: d.day, progress: d.progress })));
+  console.log('📋 DaysList - Practice days:', greatExtensionDays.map((d: any) => ({ id: d.id, day: d.day, progress: d.progress })));
 
   const handleDayClick = (dayId: string) => {
     router.push(`/courses/${marathonId}/day/${dayId}`);

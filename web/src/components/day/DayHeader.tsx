@@ -31,10 +31,10 @@ export default function DayHeader() {
   const { day, dayDate } = marathonDay;
   const formattedDate = dayDate ? format(new Date(dayDate), 'd MMMM \'yy', { locale: ru }) : '';
   
-  // Determine if it's study or practice day based on title
-  const isDayTypeStudy = dayTitle?.toLowerCase().includes('обучение') || 
-                         dayTitle?.toLowerCase().includes('study');
-  const dayType = isDayTypeStudy ? 'обучение' : 'практика';
+  // Determine if it's study or practice day
+  // Check if day is in marathonDays (1-14) or in greatExtensionDays (15+)
+  const isPracticeDay = day > 14;
+  const dayType = isPracticeDay ? 'практика' : 'обучение';
 
   // User avatar - from profile or first photo diary image
   const userAvatar = userProfile?.profilePicture || userProfile?.avatar || '/images/default-avatar.png';
