@@ -56,6 +56,7 @@ function* getDayExerciseSaga(
     yield put({
       type: 'day/setMarathonData',
       payload: {
+        marathonId: marathonData.marathonId, // Add marathonId for cache validation
         marathonDays: marathonData.marathonDays || [],
         greatExtensionDays: marathonData.greatExtensionDays || [],
         oldGreatExtensions: marathonData.oldGreatExtensions || [],
