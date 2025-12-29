@@ -59,6 +59,8 @@ function* getDayExerciseSaga(
         marathonDays: marathonData.marathonDays || [],
         greatExtensionDays: marathonData.greatExtensionDays || [],
         oldGreatExtensions: marathonData.oldGreatExtensions || [],
+        rule: marathonData.rule,
+        welcomeMessage: marathonData.welcomeMessage,
       },
     });
     

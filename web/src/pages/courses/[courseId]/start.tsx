@@ -62,8 +62,10 @@ export default function CourseStartPage() {
 
       console.log('✅ Rules accepted for marathon:', marathonId);
       
-      // Navigate to first day - use original courseId from URL
-      router.push(`/courses/${courseId}/day/day-1`);
+      // Navigate to current day (last published) - use original courseId from URL
+      const currentDayNumber = lastPublishedDay?.day || 1;
+      console.log('📍 Navigating to current day:', currentDayNumber);
+      router.push(`/courses/${courseId}/day/day-${currentDayNumber}`);
     } catch (error) {
       console.error('❌ Failed to accept rules:', error);
       alert('Не удалось принять правила. Попробуйте еще раз.');
@@ -83,8 +85,11 @@ export default function CourseStartPage() {
     );
   }
 
-  const rules = marathonData?.marathonDays?.[0]?.description || '';
+  // Get welcome message and rules from marathon data
+  const welcomeMessage = marathonData?.welcomeMessage?.welcomeMessage || '';
+  const rules = marathonData?.rule?.rule || marathonData?.marathonDays?.[0]?.description || '';
   const marathonDays = marathonData?.marathonDays || [];
+  const lastPublishedDay = marathonDays[marathonDays.length - 1];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -129,15 +134,14 @@ export default function CourseStartPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Welcome Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Добро пожаловать на курс!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Вы начинаете путь к естественному омоложению. Чтобы получить максимум от курса, 
-            внимательно ознакомьтесь с правилами и рекомендациями.
-          </p>
-        </div>
+        {welcomeMessage && (
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div
+              className="prose prose-purple max-w-none"
+              dangerouslySetInnerHTML={{ __html: welcomeMessage }}
+            />
+          </div>
+        )}
 
         {/* Rules Section */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">

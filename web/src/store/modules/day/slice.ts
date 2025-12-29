@@ -51,6 +51,14 @@ export interface MarathonData {
   marathonDays: any[];
   greatExtensionDays: any[];
   oldGreatExtensions: any[];
+  rule?: {
+    rule?: string;
+    welcomeMessage?: string;
+  };
+  welcomeMessage?: {
+    id?: string;
+    welcomeMessage?: string;
+  };
 }
 
 export interface DayState {

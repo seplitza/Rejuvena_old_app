@@ -25,39 +25,54 @@ interface DaysListProps {
 
 /**
  * Calculate star rating from progress percentage
- * Progress >= 200 → 5 stars
- * Progress >= 150 → 4 stars  
+ * For training days (marathon): max 3 stars
+ * For practice days (extension): max 5 stars
+ * 
+ * Progress >= 200 → 3 stars (training) / 5 stars (practice)
+ * Progress >= 150 → 3 stars (training) / 4 stars (practice)  
  * Progress >= 100 → 3 stars
  * Progress >= 50  → 2 stars
  * Progress >= 1   → 1 star
  * Progress = 0    → 0 stars
  */
-const getRatingFromProgress = (progress: number = 0): number => {
-  if (progress >= 200) return 5;
-  if (progress >= 150) return 4;
-  if (progress >= 100) return 3;
-  if (progress >= 50) return 2;
-  if (progress >= 1) return 1;
-  return 0;
+const getRatingFromProgress = (progress: number = 0, isPractice: boolean = false): number => {
+  if (isPractice) {
+    // Practice days have 5-star rating system
+    if (progress >= 200) return 5;
+    if (progress >= 150) return 4;
+    if (progress >= 100) return 3;
+    if (progress >= 50) return 2;
+    if (progress >= 1) return 1;
+    return 0;
+  } else {
+    // Training days have 3-star rating system
+    if (progress >= 100) return 3;
+    if (progress >= 50) return 2;
+    if (progress >= 1) return 1;
+    return 0;
+  }
 };
 
 /**
- * Star Rating Component
+ * Star Rating Component - shows only relevant stars
  */
-const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
+const StarRating: React.FC<{ rating: number; maxStars?: number }> = ({ rating, maxStars = 5 }) => {
   return (
     <div className="flex items-center justify-center space-x-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <svg
-          key={star}
-          className={`w-3 h-3 ${
-            star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-          }`}
-          viewBox="0 0 20 20"
-        >
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-        </svg>
-      ))}
+      {Array.from({ length: maxStars }).map((_, index) => {
+        const star = index + 1;
+        return (
+          <svg
+            key={star}
+            className={`w-3 h-3 ${
+              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+            }`}
+            viewBox="0 0 20 20"
+          >
+            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+          </svg>
+        );
+      })}
     </div>
   );
 };
@@ -101,7 +116,7 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
           <div className="grid grid-cols-7 gap-2">
             {marathonDays.map((day) => {
               const isActive = day.id === currentDayId;
-              const rating = getRatingFromProgress(day.progress || 0);
+              const rating = getRatingFromProgress(day.progress || 0, false); // false = training
               
               return (
                 <button
@@ -131,10 +146,10 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
                     </div>
                   </div>
                   
-                  {/* Star rating at top */}
+                  {/* Star rating at top - 3 stars max for training */}
                   {rating > 0 && (
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                      <StarRating rating={rating} />
+                      <StarRating rating={rating} maxStars={3} />
                     </div>
                   )}
                   
@@ -162,7 +177,7 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
           <div className="grid grid-cols-7 gap-2">
             {greatExtensionDays.map((day) => {
               const isActive = day.id === currentDayId;
-              const rating = getRatingFromProgress(day.progress || 0);
+              const rating = getRatingFromProgress(day.progress || 0, true); // true = practice
               
               return (
                 <button
@@ -192,10 +207,10 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
                     </div>
                   </div>
                   
-                  {/* Star rating at top */}
+                  {/* Star rating at top - 5 stars max for practice */}
                   {rating > 0 && (
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                      <StarRating rating={rating} />
+                      <StarRating rating={rating} maxStars={5} />
                     </div>
                   )}
                   
