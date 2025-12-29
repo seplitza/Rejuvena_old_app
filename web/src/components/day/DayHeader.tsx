@@ -29,7 +29,7 @@ export default function DayHeader() {
   }
 
   const { day, dayDate } = marathonDay;
-  const formattedDate = dayDate ? format(new Date(dayDate), 'd MMMM \'yy', { locale: ru }) : '';
+  const formattedDate = dayDate ? format(new Date(dayDate), 'd MMMM \'\'yy', { locale: ru }) : '';
   
   // Determine if it's study or practice day
   // Check if day is in marathonDays (1-14) or in greatExtensionDays (15+)

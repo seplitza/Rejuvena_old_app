@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectMarathonData } from '@/store/modules/day/selectors';
 import { selectUserOrders } from '@/store/modules/courses/selectors';
 import { getDayExercise } from '@/store/modules/day/slice';
+import { updateCourseRulesAccepted } from '@/store/modules/courses/slice';
 import { request } from '@/api/request';
 import * as endpoints from '@/api/endpoints';
 import DaysList from '@/components/day/DaysList';
@@ -118,6 +119,12 @@ export default function CourseStartPage() {
       });
 
       console.log('✅ Rules accepted for marathon:', marathonId);
+      
+      // Update Redux store to persist rules acceptance
+      dispatch(updateCourseRulesAccepted({ 
+        courseId: marathonId, 
+        accepted: true 
+      }));
       
       // Navigate to current day (last published) - use original courseId from URL
       const currentDayNumber = lastPublishedDay?.day || 1;

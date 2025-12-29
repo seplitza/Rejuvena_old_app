@@ -183,6 +183,13 @@ const coursesSlice = createSlice({
         console.log(`📝 Updated orderNumber for ${order.title}: ${action.payload.orderNumber}`);
       }
     },
+    updateCourseRulesAccepted(state, action: PayloadAction<{ courseId: string; accepted: boolean }>) {
+      const order = state.myOrders.find(o => o.id === action.payload.courseId || o.wpMarathonId === action.payload.courseId);
+      if (order) {
+        order.isAcceptCourseTerm = action.payload.accepted;
+        console.log(`✅ Updated rules acceptance for ${order.title}: ${action.payload.accepted}`);
+      }
+    },
     setLoadingOrders(state, action: PayloadAction<boolean>) {
       state.loadingOrders = action.payload;
     },
@@ -260,6 +267,7 @@ export const coursesReducer = coursesSlice.reducer;
 export const {
   setMyOrders,
   updateOrderNumber,
+  updateCourseRulesAccepted,
   setActivatingOrderId,
   setLoadingOrders,
   setOrdersError,
