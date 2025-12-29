@@ -61,8 +61,20 @@ function* getDayExerciseSaga(
         oldGreatExtensions: marathonData.oldGreatExtensions || [],
         rule: marathonData.rule,
         welcomeMessage: marathonData.welcomeMessage,
+        isAcceptCourseTerm: marathonData.isAcceptCourseTerm, // Include rules acceptance status
       },
     });
+    
+    // Update courses Redux store with rules acceptance from marathon API
+    if (marathonData.isAcceptCourseTerm !== undefined) {
+      yield put({
+        type: 'courses/updateCourseRulesAccepted',
+        payload: {
+          courseId: marathonId,
+          status: marathonData.isAcceptCourseTerm,
+        },
+      });
+    }
     
     let actualDayId = dayId;
     

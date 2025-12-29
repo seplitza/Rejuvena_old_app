@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectMarathonData } from '@/store/modules/day/selectors';
 import { selectUserOrders } from '@/store/modules/courses/selectors';
 import { getDayExercise } from '@/store/modules/day/slice';
-import { acceptCourseRules } from '@/store/modules/courses/slice';
+import { acceptCourseRules, updateCourseRulesAccepted } from '@/store/modules/courses/slice';
 import DaysList from '@/components/day/DaysList';
 import Image from 'next/image';
 
@@ -94,38 +94,31 @@ export default function CourseStartPage() {
     }
   }, [marathonId, marathonData, dispatch]);
 
-  // If rules already accepted, redirect to current day
+  // Sync checkbox with marathon data from API (contains isAcceptCourseTerm)
   useEffect(() => {
-    if (marathonData && currentCourse?.isAcceptCourseTerm && courseId) {
-      const currentDayId = lastPublishedDay?.id;
-      const currentDayNumber = lastPublishedDay?.day || 1;
+    if (marathonData) {
+      const rulesAcceptedFromAPI = (marathonData as any).isAcceptCourseTerm === true;
+      console.log('📋 Marathon data loaded, isAcceptCourseTerm:', rulesAcceptedFromAPI);
+      setIsAccepted(rulesAcceptedFromAPI);
       
-      if (currentDayId) {
-        console.log('✅ Rules already accepted, navigating to day', currentDayNumber, 'with ID:', currentDayId);
-        router.push(`/courses/${courseId}/day/${currentDayId}`);
-      } else {
-        console.log('✅ Rules already accepted, navigating to "current"');
-        router.push(`/courses/${courseId}/day/current`);
+      // Update Redux store if value from API differs
+      if (marathonId && currentCourse && rulesAcceptedFromAPI !== currentCourse.isAcceptCourseTerm) {
+        dispatch(updateCourseRulesAccepted({ courseId: marathonId, status: rulesAcceptedFromAPI }));
       }
     }
-  }, [marathonData, currentCourse, courseId, lastPublishedDay, router]);
+  }, [marathonData, marathonId, currentCourse, dispatch]);
 
   const handleAcceptRules = async () => {
     if (!marathonId || isSubmitting) return;
 
+    // Can only proceed if rules are accepted
+    if (!isAccepted) {
+      alert('Пожалуйста, примите правила курса для продолжения.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-
-      // Dispatch Redux action to save acceptance to backend and update store
-      dispatch(acceptCourseRules({ 
-        courseId: marathonId, 
-        status: true 
-      }));
-
-      console.log('✅ Rules acceptance dispatched for marathon:', marathonId);
-      
-      // Wait a bit for the Redux action to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Navigate to current day (last published) - use dayId (UUID) not day number
       const currentDayId = lastPublishedDay?.id;
@@ -139,8 +132,35 @@ export default function CourseStartPage() {
         router.push(`/courses/${courseId}/day/current`);
       }
     } catch (error) {
-      console.error('❌ Failed to accept rules:', error);
-      alert('Не удалось принять правила. Попробуйте еще раз.');
+      console.error('❌ Failed to navigate:', error);
+      alert('Произошла ошибка. Попробуйте еще раз.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCheckboxChange = async (checked: boolean) => {
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      setIsAccepted(checked);
+
+      // Dispatch Redux action to save to backend and update store
+      dispatch(acceptCourseRules({ 
+        courseId: marathonId, 
+        status: checked 
+      }));
+
+      console.log(checked ? '✅ Rules accepted' : '❌ Rules rejected', 'for marathon:', marathonId);
+      
+      // Wait for API call to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('❌ Failed to update rules acceptance:', error);
+      // Revert checkbox on error
+      setIsAccepted(!checked);
+      alert('Не удалось сохранить изменения. Попробуйте еще раз.');
     } finally {
       setIsSubmitting(false);
     }
@@ -267,8 +287,9 @@ export default function CourseStartPage() {
                   <input
                     type="checkbox"
                     checked={isAccepted}
-                    onChange={(e) => setIsAccepted(e.target.checked)}
-                    className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    onChange={(e) => handleCheckboxChange(e.target.checked)}
+                    disabled={isSubmitting}
+                    className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
                   />
                   <span className="text-gray-700">
                     Я ознакомился(ась) с правилами курса и принимаю условия
