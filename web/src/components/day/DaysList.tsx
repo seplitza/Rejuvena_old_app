@@ -103,9 +103,19 @@ export default function DaysList({ marathonId, currentDayId }: DaysListProps) {
 
   return (
     <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">
-        Пройденные дни
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold text-gray-800">
+          Пройденные дни
+        </h3>
+        
+        {/* START button to return to course welcome page */}
+        <button
+          onClick={() => router.push(`/courses/${marathonId}/start`)}
+          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+        >
+          СТАРТ
+        </button>
+      </div>
       
       {/* Marathon Days (Learning) */}
       {marathonDays.length > 0 && (

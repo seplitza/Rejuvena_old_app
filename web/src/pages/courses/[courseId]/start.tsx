@@ -15,6 +15,48 @@ import * as endpoints from '@/api/endpoints';
 import DaysList from '@/components/day/DaysList';
 import Image from 'next/image';
 
+/**
+ * Component to render rules with alternating backgrounds
+ * Parses HTML bullet lists and applies styling
+ */
+const RulesList: React.FC<{ htmlContent: string }> = ({ htmlContent }) => {
+  // Parse HTML to extract list items
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const listItems = Array.from(doc.querySelectorAll('li'));
+
+  if (listItems.length === 0) {
+    // Fallback: render as HTML if no list items found
+    return (
+      <div
+        className="prose prose-purple max-w-none"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {listItems.map((item, index) => (
+        <div
+          key={index}
+          className={`p-4 rounded-lg ${
+            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+          }`}
+        >
+          <div className="flex items-start">
+            <span className="text-purple-600 font-bold mr-3 mt-0.5">•</span>
+            <div 
+              className="flex-1 text-gray-700"
+              dangerouslySetInnerHTML={{ __html: item.innerHTML }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default function CourseStartPage() {
   const router = useRouter();
   const { courseId } = router.query;
@@ -36,6 +78,12 @@ export default function CourseStartPage() {
   // The backend expects marathonId parameter to be the order ID
   const marathonId = currentCourse?.id || (courseId as string);
 
+  // Get welcome message and rules from marathon data
+  const welcomeMessage = marathonData?.welcomeMessage?.welcomeMessage || '';
+  const rules = marathonData?.rule?.rule || marathonData?.marathonDays?.[0]?.description || '';
+  const marathonDays = marathonData?.marathonDays || [];
+  const lastPublishedDay = marathonDays[marathonDays.length - 1];
+
   // Load marathon data if not already loaded
   useEffect(() => {
     if (marathonId && !marathonData) {
@@ -46,6 +94,15 @@ export default function CourseStartPage() {
       }));
     }
   }, [marathonId, marathonData, dispatch]);
+
+  // If rules already accepted, redirect to current day
+  useEffect(() => {
+    if (marathonData && currentCourse?.isAcceptCourseTerm && courseId) {
+      const currentDayNumber = lastPublishedDay?.day || 1;
+      console.log('✅ Rules already accepted, navigating to current day:', currentDayNumber);
+      router.push(`/courses/${courseId}/day/day-${currentDayNumber}`);
+    }
+  }, [marathonData, currentCourse, courseId, lastPublishedDay, router]);
 
   const handleAcceptRules = async () => {
     if (!marathonId || isSubmitting) return;
@@ -84,12 +141,6 @@ export default function CourseStartPage() {
       </div>
     );
   }
-
-  // Get welcome message and rules from marathon data
-  const welcomeMessage = marathonData?.welcomeMessage?.welcomeMessage || '';
-  const rules = marathonData?.rule?.rule || marathonData?.marathonDays?.[0]?.description || '';
-  const marathonDays = marathonData?.marathonDays || [];
-  const lastPublishedDay = marathonDays[marathonDays.length - 1];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -169,20 +220,29 @@ export default function CourseStartPage() {
           {isRulesExpanded && (
             <div className="p-6">
               {rules ? (
-                <div
-                  className="prose prose-purple max-w-none"
-                  dangerouslySetInnerHTML={{ __html: rules }}
-                />
+                <RulesList htmlContent={rules} />
               ) : (
-                <div className="text-gray-600">
+                <div className="text-gray-600 space-y-2">
                   <p className="mb-4">📋 <strong>Основные правила:</strong></p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>Выполняйте упражнения ежедневно в течение 14 дней</li>
-                    <li>Следуйте видеоинструкциям для правильной техники</li>
-                    <li>Делайте фото до/после для отслеживания прогресса</li>
-                    <li>Отмечайте выполненные упражнения галочками</li>
-                    <li>Набирайте звезды за качественное выполнение</li>
-                  </ul>
+                  {[
+                    'Выполняйте упражнения ежедневно в течение 14 дней',
+                    'Следуйте видеоинструкциям для правильной техники',
+                    'Делайте фото до/после для отслеживания прогресса',
+                    'Отмечайте выполненные упражнения галочками',
+                    'Набирайте звезды за качественное выполнение',
+                  ].map((rule, index) => (
+                    <div
+                      key={index}
+                      className={`p-4 rounded-lg ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <span className="text-purple-600 font-bold mr-3">•</span>
+                        <span className="flex-1">{rule}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
