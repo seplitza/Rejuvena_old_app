@@ -85,10 +85,11 @@ const CoursesPage: React.FC = () => {
     }
   };
 
-  const handleStartCourse = (marathonId: string) => {
+  const handleStartCourse = (courseId: string) => {
     // Check if this course needs activation first
+    // courseId is order.id from the backend
     const course = myCoursesWithProgress.find(c => 
-      c.marathonId === marathonId || c.wpMarathonId === marathonId
+      c.id === courseId || c.wpMarathonId === courseId
     );
     
     // CRITICAL: Only activate if orderStatus is NOT "Approved"
@@ -99,7 +100,7 @@ const CoursesPage: React.FC = () => {
       console.log('🚀 Course needs activation before starting:', course.title);
       
       // Set pending navigation destination - saga will resolve current day
-      setPendingNavigationTo(`/courses/${marathonId}/day/current`);
+      setPendingNavigationTo(`/courses/${courseId}/day/current`);
       
       // Create order and auto-activate in background
       // When saga completes, useEffect will trigger navigation
@@ -115,13 +116,13 @@ const CoursesPage: React.FC = () => {
     
     if (!hasAcceptedRules) {
       console.log('📋 Rules not accepted, redirecting to /start');
-      router.push(`/courses/${marathonId}/start`);
+      router.push(`/courses/${courseId}/start`);
       return;
     }
     
     // Already activated - navigate to current day
     // Day saga will fetch marathon structure and resolve 'current' to actual day ID
-    router.push(`/courses/${marathonId}/day/current`);
+    router.push(`/courses/${courseId}/day/current`);
   };
 
   const handleJoinCourse = (courseId: string) => {
@@ -150,7 +151,7 @@ const CoursesPage: React.FC = () => {
     // If in my courses and already activated, navigate
     if (myCourse && myCourse.orderNumber !== null) {
       setIsModalOpen(false);
-      handleStartCourse(myCourse.wpMarathonId || courseId);
+      handleStartCourse(myCourse.id || courseId);
       return;
     }
     
@@ -222,7 +223,7 @@ const CoursesPage: React.FC = () => {
                   <MyCourseCard
                     key={order.orderId || order.id}
                     course={{
-                      id: order.marathonId,
+                      id: order.id,
                       title: order.title || order.marathonName || 'Курс без названия',
                       subtitle: order.subTitle,
                       description: fallbackDescription,
@@ -238,7 +239,7 @@ const CoursesPage: React.FC = () => {
                       currency: currency,
                     }}
                     language={selectedLanguage}
-                    onStart={() => handleStartCourse(order.marathonId)}
+                    onStart={() => handleStartCourse(order.id)}
                     onLearnMore={() => handleCourseDetails(order, true)}
                   />
                 );

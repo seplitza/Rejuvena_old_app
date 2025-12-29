@@ -27,38 +27,42 @@ export default function CourseStartPage() {
   const [isAccepted, setIsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Find current course
+  // Find current course - courseId from URL can be either order.id or order.wpMarathonId
   const currentCourse = userOrders.find(order => 
-    order.id === courseId || order.marathonId === courseId
+    order.id === courseId || order.wpMarathonId === courseId
   );
+
+  // CRITICAL: Use order.id (not wpMarathonId) for /startmarathon API
+  // The backend expects marathonId parameter to be the order ID
+  const marathonId = currentCourse?.id || (courseId as string);
 
   // Load marathon data if not already loaded
   useEffect(() => {
-    if (courseId && typeof courseId === 'string' && !marathonData) {
-      const timeZoneOffset = new Date().getTimezoneOffset();
+    if (marathonId && !marathonData) {
+      console.log('📚 Loading marathon data for order ID:', marathonId);
       dispatch(getDayExercise({
-        marathonId: courseId,
+        marathonId: marathonId,
         dayId: 'current',
       }));
     }
-  }, [courseId, marathonData, dispatch]);
+  }, [marathonId, marathonData, dispatch]);
 
   const handleAcceptRules = async () => {
-    if (!courseId || isSubmitting) return;
+    if (!marathonId || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
 
       await request.get(endpoints.accept_marathon_terms, {
         params: {
-          courseId: courseId as string,
+          courseId: marathonId,
           status: true,
         },
       });
 
-      console.log('✅ Rules accepted');
+      console.log('✅ Rules accepted for marathon:', marathonId);
       
-      // Navigate to first day
+      // Navigate to first day - use original courseId from URL
       router.push(`/courses/${courseId}/day/day-1`);
     } catch (error) {
       console.error('❌ Failed to accept rules:', error);
@@ -211,9 +215,9 @@ export default function CourseStartPage() {
         </div>
 
         {/* Days List */}
-        {courseId && marathonDays.length > 0 && (
+        {marathonId && marathonDays.length > 0 && (
           <DaysList 
-            marathonId={courseId as string} 
+            marathonId={marathonId} 
             currentDayId={marathonDays[0]?.id || ''}
           />
         )}
