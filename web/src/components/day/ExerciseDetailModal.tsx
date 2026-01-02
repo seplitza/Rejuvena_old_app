@@ -277,8 +277,8 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
           {availableContent.length > 0 && (
             <div className="flex flex-col items-center bg-purple-50 py-4">
               
-              {/* Video/Image Container - Max 400px width, flexible height */}
-              <div className="w-full max-w-[400px] px-4 md:px-0">
+              {/* Video/Image Container - Full width, flexible height */}
+              <div className="w-full px-4 md:px-0">
                 <div className="relative w-full">
                   {/* Hint for images (GIFs) - overlaid on content */}
                   {currentContent?.type === 'image' && (
@@ -301,13 +301,13 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                             controls
                             controlsList="nodownload nofullscreen noremoteplayback"
                             disablePictureInPicture
-                            className="w-full aspect-square object-contain bg-white rounded-lg"
+                            className="w-full aspect-video object-contain bg-white rounded-lg"
                             playsInline
                             onError={() => handleContentError(currentContentIndex)}
                             onContextMenu={(e) => e.preventDefault()}
                           />
                         ) : (
-                          <div className="w-full aspect-square bg-white rounded-lg overflow-hidden relative">
+                          <div className="w-full aspect-video bg-white rounded-lg overflow-hidden relative">
                             <iframe
                               src={currentContent.embedUrl}
                               className="w-full h-full"
@@ -377,7 +377,7 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                           </div>
                         )
                       ) : (
-                        <div className="w-full aspect-square flex items-center justify-center bg-white rounded-lg p-4">
+                        <div className="w-full aspect-video flex items-center justify-center bg-white rounded-lg p-4">
                           <div className="relative w-1/2 h-1/2">
                             <Image
                               src={currentContent.contentPath}

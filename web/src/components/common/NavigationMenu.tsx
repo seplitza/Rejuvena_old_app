@@ -12,6 +12,13 @@ interface NavigationMenuProps {
   onClose: () => void;
 }
 
+// Normalize emoji by removing variation selectors and zero-width joiners
+function normalizeEmoji(text: string): string {
+  return text
+    .replace(/[\uFE00-\uFE0F]/g, '') // Remove variation selectors
+    .replace(/\u200D/g, '');           // Remove zero-width joiner
+}
+
 export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -77,7 +84,7 @@ export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps)
               onClick={() => handleNavigation(item.path)}
               className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-purple-50 transition-colors text-left group"
             >
-              <span className="text-2xl">{item.icon}</span>
+              <span className="text-2xl">{normalizeEmoji(item.icon)}</span>
               <div className="flex-1">
                 <span className="text-gray-800 group-hover:text-purple-600 font-medium">
                   {item.label}
@@ -102,7 +109,7 @@ export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps)
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 transition-colors text-left group"
           >
-            <span className="text-2xl">🚪</span>
+            <span className="text-2xl">{normalizeEmoji('🚪')}</span>
             <span className="text-gray-800 group-hover:text-red-600 font-medium">Выйти</span>
           </button>
         </nav>
