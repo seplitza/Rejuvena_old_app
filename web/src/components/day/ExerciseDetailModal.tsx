@@ -54,7 +54,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
   if (url.includes('youtube.com/embed/')) {
     const videoId = url.split('youtube.com/embed/')[1]?.split('?')[0];
     return { 
-      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`, 
+      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`, 
       type: 'iframe' 
     };
   }
@@ -71,7 +71,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
       ? url.split('youtu.be/')[1]?.split('?')[0]
       : new URL(url).searchParams.get('v');
     return { 
-      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`, 
+      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`, 
       type: 'iframe' 
     };
   }
@@ -307,6 +307,15 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                               allowFullScreen
                               onError={() => handleContentError(currentContentIndex)}
                             />
+                            {/* Overlay to block clicks on top portion (title/channel) but allow controls at bottom */}
+                            <div 
+                              className="absolute top-0 left-0 right-0"
+                              style={{ 
+                                height: 'calc(100% - 60px)',
+                                pointerEvents: 'none',
+                                zIndex: 1
+                              }}
+                            />
                             <style jsx global>{`
                               /* Hide Vimeo overlay elements */
                               .vp-sidedock,
@@ -318,6 +327,15 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                                 display: none !important;
                                 opacity: 0 !important;
                                 visibility: hidden !important;
+                              }
+                              
+                              /* Hide YouTube overlay elements */
+                              iframe[src*="youtube.com"] .ytp-title,
+                              iframe[src*="youtube.com"] .ytp-chrome-top,
+                              iframe[src*="youtube.com"] .ytp-show-cards-title,
+                              iframe[src*="youtube.com"] .ytp-watermark {
+                                display: none !important;
+                                pointer-events: none !important;
                               }
                             `}</style>
                           </div>

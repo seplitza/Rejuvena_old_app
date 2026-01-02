@@ -25,9 +25,10 @@ function extractVideos(html: string): VideoEmbed[] {
   // Extract YouTube videos
   const youtubeMatches = html.matchAll(new RegExp(YOUTUBE_REGEX, 'g'));
   for (const match of youtubeMatches) {
+    const origin = typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : 'https://seplitza.github.io';
     videos.push({
       type: 'youtube',
-      url: `https://www.youtube.com/embed/${match[1]}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`,
+      url: `https://www.youtube.com/embed/${match[1]}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1&origin=${origin}`,
       id: match[1],
     });
   }
@@ -88,6 +89,15 @@ function VideoPlayer({ video }: { video: VideoEmbed }) {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+            {/* Overlay to block clicks on top portion but allow controls */}
+            <div 
+              className="absolute top-0 left-0 right-0"
+              style={{ 
+                height: 'calc(100% - 60px)',
+                pointerEvents: 'none',
+                zIndex: 1
+              }}
+            />
             <style jsx>{`
               iframe {
                 pointer-events: auto;
@@ -99,6 +109,10 @@ function VideoPlayer({ video }: { video: VideoEmbed }) {
               :global(.vp-portrait),
               :global(.vp-badge) {
                 display: none !important;
+              }
+              /* Block YouTube overlay clicks */
+              :global(iframe[src*="youtube.com"]) {
+                position: relative;
               }
             `}</style>
           </div>
