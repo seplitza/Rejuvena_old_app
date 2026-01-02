@@ -15,9 +15,15 @@ import {
 } from '@/store/modules/day/selectors';
 import { setActiveExerciseId, changeExerciseStatus } from '@/store/modules/day/slice';
 import ExerciseItem from './ExerciseItem';
-import ExerciseDetailModal from './ExerciseDetailModal';
 import type { Exercise } from '@/store/modules/day/slice';
 import Image from 'next/image';
+
+// Import modal - keep reference to prevent tree-shaking
+import ExerciseDetailModal from './ExerciseDetailModal';
+if (typeof window !== 'undefined' && !window.__EXERCISE_MODAL_LOADED) {
+  window.__EXERCISE_MODAL_LOADED = true;
+  console.log('✅ ExerciseDetailModal loaded');
+}
 
 export default function DayPlan() {
   const router = useRouter();
