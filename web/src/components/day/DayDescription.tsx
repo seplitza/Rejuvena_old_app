@@ -27,7 +27,7 @@ function extractVideos(html: string): VideoEmbed[] {
   for (const match of youtubeMatches) {
     videos.push({
       type: 'youtube',
-      url: `https://www.youtube.com/embed/${match[1]}`,
+      url: `https://www.youtube.com/embed/${match[1]}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`,
       id: match[1],
     });
   }
@@ -37,7 +37,7 @@ function extractVideos(html: string): VideoEmbed[] {
   for (const match of vimeoMatches) {
     videos.push({
       type: 'vimeo',
-      url: `https://player.vimeo.com/video/${match[1]}`,
+      url: `https://player.vimeo.com/video/${match[1]}?title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&dnt=1&controls=1&transparent=0`,
       id: match[1],
     });
   }
@@ -80,14 +80,27 @@ function VideoPlayer({ video }: { video: VideoEmbed }) {
     case 'vk':
       return (
         <div className="flex justify-center mb-4">
-          <div className="w-full max-w-[400px] aspect-square">
+          <div className="w-full max-w-[400px] aspect-square relative overflow-hidden rounded-none md:rounded-lg">
             <iframe
               src={video.url}
-              className="w-full h-full rounded-none md:rounded-lg"
+              className="w-full h-full"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+            <style jsx>{`
+              iframe {
+                pointer-events: auto;
+              }
+              /* Hide Vimeo overlays */
+              :global(.vp-sidedock),
+              :global(.vp-title),
+              :global(.vp-byline),
+              :global(.vp-portrait),
+              :global(.vp-badge) {
+                display: none !important;
+              }
+            `}</style>
           </div>
         </div>
       );

@@ -46,7 +46,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
   if (url.includes('player.vimeo.com/video/')) {
     const videoId = url.split('player.vimeo.com/video/')[1]?.split('?')[0];
     return { 
-      embedUrl: `https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0&dnt=1&controls=1`, 
+      embedUrl: `https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&dnt=1&controls=1&transparent=0`, 
       type: 'iframe' 
     };
   }
@@ -54,7 +54,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
   if (url.includes('youtube.com/embed/')) {
     const videoId = url.split('youtube.com/embed/')[1]?.split('?')[0];
     return { 
-      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0`, 
+      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`, 
       type: 'iframe' 
     };
   }
@@ -71,7 +71,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
       ? url.split('youtu.be/')[1]?.split('?')[0]
       : new URL(url).searchParams.get('v');
     return { 
-      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0`, 
+      embedUrl: `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&fs=1&controls=1&disablekb=0&iv_load_policy=3&cc_load_policy=0&playsinline=1`, 
       type: 'iframe' 
     };
   }
@@ -80,7 +80,7 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
   if (url.includes('vimeo.com') && !url.includes('player.vimeo.com')) {
     const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
     return { 
-      embedUrl: `https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0&dnt=1&controls=1`, 
+      embedUrl: `https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&dnt=1&controls=1&transparent=0`, 
       type: 'iframe' 
     };
   }
@@ -298,7 +298,7 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                             onContextMenu={(e) => e.preventDefault()}
                           />
                         ) : (
-                          <div className="w-full aspect-square bg-white rounded-lg overflow-hidden">
+                          <div className="w-full aspect-square bg-white rounded-lg overflow-hidden relative">
                             <iframe
                               src={currentContent.embedUrl}
                               className="w-full h-full"
@@ -307,6 +307,19 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                               allowFullScreen
                               onError={() => handleContentError(currentContentIndex)}
                             />
+                            <style jsx global>{`
+                              /* Hide Vimeo overlay elements */
+                              .vp-sidedock,
+                              .vp-title,
+                              .vp-byline,
+                              .vp-portrait,
+                              .vp-badge,
+                              .vp-sidedock-button {
+                                display: none !important;
+                                opacity: 0 !important;
+                                visibility: hidden !important;
+                              }
+                            `}</style>
                           </div>
                         )
                       ) : (
