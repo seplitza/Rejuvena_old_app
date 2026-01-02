@@ -3,7 +3,7 @@
  * Displays collapsible categories with exercises
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/router';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import {
@@ -18,12 +18,8 @@ import ExerciseItem from './ExerciseItem';
 import type { Exercise } from '@/store/modules/day/slice';
 import Image from 'next/image';
 
-// Import modal - keep reference to prevent tree-shaking
-import ExerciseDetailModal from './ExerciseDetailModal';
-if (typeof window !== 'undefined' && !window.__EXERCISE_MODAL_LOADED) {
-  window.__EXERCISE_MODAL_LOADED = true;
-  console.log('✅ ExerciseDetailModal loaded');
-}
+// Lazy load modal component
+const ExerciseDetailModal = lazy(() => import('./ExerciseDetailModal'));
 
 export default function DayPlan() {
   const router = useRouter();
@@ -177,12 +173,14 @@ export default function DayPlan() {
         </div>
       </div>
 
-      {/* Exercise Detail Modal - Always render to prevent tree-shaking */}
-      <ExerciseDetailModal
-        exercise={selectedExercise || ({} as Exercise)}
-        isOpen={!!selectedExercise}
-        onClose={() => setSelectedExercise(null)}
-      />
+      {/* Exercise Detail Modal with Suspense for lazy loading */}
+      <Suspense fallback={null}>
+        <ExerciseDetailModal
+          exercise={selectedExercise || ({} as Exercise)}
+          isOpen={!!selectedExercise}
+          onClose={() => setSelectedExercise(null)}
+        />
+      </Suspense>
     </>
   );
 }
