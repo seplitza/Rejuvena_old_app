@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { request, endpoints } from '../api';
 import {
   fetchMyOrders,
   fetchAvailableCourses,
