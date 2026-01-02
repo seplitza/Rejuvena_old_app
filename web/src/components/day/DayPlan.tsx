@@ -1,12 +1,10 @@
 /**
  * Day Plan Component
  * Displays collapsible categories with exercises
- * Updated: 2026-01-02 - Force rebuild for modal functionality
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import {
   selectDayCategories,
@@ -17,13 +15,9 @@ import {
 } from '@/store/modules/day/selectors';
 import { setActiveExerciseId, changeExerciseStatus } from '@/store/modules/day/slice';
 import ExerciseItem from './ExerciseItem';
+import ExerciseDetailModal from './ExerciseDetailModal';
 import type { Exercise } from '@/store/modules/day/slice';
 import Image from 'next/image';
-
-// Dynamic import to force inclusion in bundle
-const ExerciseDetailModal = dynamic(() => import('./ExerciseDetailModal'), {
-  ssr: false,
-});
 
 export default function DayPlan() {
   const router = useRouter();
