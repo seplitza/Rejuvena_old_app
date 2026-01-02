@@ -27,7 +27,7 @@ import CourseDetailModal from '../components/courses/CourseDetailModal';
 import LanguageSelector from '../components/common/LanguageSelector';
 import { translations, getCurrency, getDurationDescription, type LanguageCode } from '../utils/i18n';
 
-const CoursesPage: React.FC = () => {
+const CoursesPage: React.FC = (): JSX.Element => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
