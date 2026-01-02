@@ -112,26 +112,50 @@ const CoursesPage: React.FC = () => {
     
     console.log('✅ Course already activated (orderStatus:', course?.orderStatus, '), navigating directly');
     
-    // Check if user accepted course rules
-    // If not - redirect to start page first
-    const hasAcceptedRules = course?.isAcceptCourseTerm === true;
-    
-    console.log('📋 Checking rules acceptance:', {
-      hasAcceptedRules,
-      isAcceptCourseTerm: course?.isAcceptCourseTerm,
-      courseId,
-      courseWpMarathonId: course?.wpMarathonId
-    });
-    
-    if (!hasAcceptedRules) {
-      console.log('📋 Rules not accepted, redirecting to /start with courseId:', courseId);
+    // Check rules acceptance by calling startmarathon API
+    // This API returns isAcceptCourseTerm field
+    try {
+      const marathonData: any = await request.get(endpoints.get_start_marathon, {
+        params: {
+          marathonId: courseId,
+          timeZoneOffset: new Date().getTimezoneOffset(),
+        },
+      });
+      
+      const hasAcceptedRules = marathonData?.isAcceptCourseTerm === true;
+      
+      console.log('📋 Checking rules acceptance from API:', {
+        hasAcceptedRules,
+        isAcceptCourseTerm: marathonData?.isAcceptCourseTerm,
+        courseId,
+      });
+      
+      if (!hasAcceptedRules) {
+        console.log('📋 Rules not accepted, redirecting to /start with courseId:', courseId);
+        router.push(`/courses/${courseId}/start`);
+        return;
+      }
+      
+      // Already activated and rules accepted - navigate to current day
+      // Get current day from marathon data
+      const allDays = [
+        ...(marathonData.marathonDays || []),
+        ...(marathonData.greatExtensionDays || []),
+      ];
+      const currentDay = allDays[allDays.length - 1]; // Last published day
+      
+      if (currentDay?.id) {
+        console.log('📍 Navigating to current day:', currentDay.day, 'with ID:', currentDay.id);
+        router.push(`/courses/${courseId}/day/${currentDay.id}`);
+      } else {
+        // Fallback to 'current' if no day ID found
+        router.push(`/courses/${courseId}/day/current`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to check marathon status:', error);
+      // On error, redirect to start page
       router.push(`/courses/${courseId}/start`);
-      return;
     }
-    
-    // Already activated - navigate to current day
-    // Day saga will fetch marathon structure and resolve 'current' to actual day ID
-    router.push(`/courses/${courseId}/day/current`);
   };
 
   const handleJoinCourse = (courseId: string) => {
@@ -230,7 +254,7 @@ const CoursesPage: React.FC = () => {
                 
                 return (
                   <MyCourseCard
-                    key={order.orderId || order.id}
+                    key={order.id}
                     course={{
                       id: order.id,
                       title: order.title || order.marathonName || 'Курс без названия',

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import {
   selectDayCategories,
@@ -14,11 +15,12 @@ import {
 } from '@/store/modules/day/selectors';
 import { setActiveExerciseId, changeExerciseStatus } from '@/store/modules/day/slice';
 import ExerciseItem from './ExerciseItem';
-import ExerciseDetailModal from './ExerciseDetailModal';
 import type { Exercise } from '@/store/modules/day/slice';
 import Image from 'next/image';
 
 export default function DayPlan() {
+  const router = useRouter();
+  const { courseId, dayId } = router.query;
   const dispatch = useAppDispatch();
   const dayCategories = useAppSelector(selectDayCategories);
   const activeExerciseId = useAppSelector(selectActiveExerciseId);
@@ -34,15 +36,6 @@ export default function DayPlan() {
     });
     return initial;
   });
-
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId],
-    }));
-  };
 
   const handleExerciseClick = (exercise: Exercise, uniqueId: string) => {
     if (exercise.blockExercise) return;
@@ -68,7 +61,17 @@ export default function DayPlan() {
   };
 
   const handleExerciseDetailClick = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
+    // Navigate to exercise detail page
+    if (courseId && dayId) {
+      router.push(`/courses/${courseId}/day/${dayId}/exercise/${exercise.id}`);
+    }
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
   };
 
   if (!dayCategories || dayCategories.length === 0) {
@@ -164,14 +167,7 @@ export default function DayPlan() {
         </div>
       </div>
 
-      {/* Exercise Detail Modal */}
-      {selectedExercise && (
-        <ExerciseDetailModal
-          exercise={selectedExercise}
-          isOpen={!!selectedExercise}
-          onClose={() => setSelectedExercise(null)}
-        />
-      )}
+      {/* Removed ExerciseDetailModal - now opens as separate page */}
     </>
   );
 }
