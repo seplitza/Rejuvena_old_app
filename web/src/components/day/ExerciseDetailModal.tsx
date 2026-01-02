@@ -315,13 +315,23 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
                               onError={() => handleContentError(currentContentIndex)}
-                              style={{ pointerEvents: 'auto' }}
                             />
-                            {/* Strong overlay to block ALL clicks except on bottom 50px control bar */}
+                            {/* Targeted overlays to block only clickable branding elements */}
+                            {/* Top bar overlay - blocks title/channel name (first 20% of height) */}
                             <div 
-                              className="absolute inset-0 pointer-events-auto"
+                              className="absolute top-0 left-0 right-0 pointer-events-auto bg-transparent"
                               style={{ 
-                                paddingBottom: '50px',
+                                height: '20%',
+                                zIndex: 10
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            {/* Bottom-right corner overlay - blocks Vimeo/YouTube logos */}
+                            <div 
+                              className="absolute bottom-0 right-0 pointer-events-auto bg-transparent"
+                              style={{ 
+                                width: '80px',
+                                height: '80px',
                                 zIndex: 10
                               }}
                               onClick={(e) => e.stopPropagation()}
