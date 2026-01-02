@@ -38,7 +38,7 @@ export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps)
     { label: 'Личная информация', path: '/profile', icon: '👤' },
     { label: 'Фотодневник', path: '/photo-diary', icon: '📸' },
     { label: 'Мои заказы', path: '/orders', icon: '📦' },
-    { label: 'Лучшие результаты', path: '/results', icon: '🏆', badge: 'в разработке' },
+    { label: 'Лучшие результаты', path: '/results', icon: '🏆' },
     { label: 'Уведомления', path: '/notifications', icon: '🔔' },
     { label: 'Обратная связь', path: '/feedback', icon: '💬' },
   ];
@@ -55,8 +55,8 @@ export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps)
 
       {/* Menu Panel */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
@@ -89,11 +89,6 @@ export default function NavigationMenu({ isOpen, onClose }: NavigationMenuProps)
                 <span className="text-gray-800 group-hover:text-purple-600 font-medium">
                   {item.label}
                 </span>
-                {item.badge && (
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                    {item.badge}
-                  </span>
-                )}
               </div>
               <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
