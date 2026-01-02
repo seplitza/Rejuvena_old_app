@@ -148,7 +148,8 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose }: Exerc
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Video */}embedUrl && (
+          {/* Video */}
+          {videoUrl && embedUrl && (
             <div className="aspect-video w-full bg-gray-900 rounded-lg overflow-hidden">
               {videoType === 'video' ? (
                 <video
@@ -164,8 +165,7 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose }: Exerc
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-               
-                <video src={videoUrl} controls className="w-full h-full" />
+                />
               )}
             </div>
           )}
