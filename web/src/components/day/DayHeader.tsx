@@ -49,16 +49,16 @@ export default function DayHeader() {
       <header className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg">
         <div className="max-w-4xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
-            {/* Left: Menu + Course Name */}
+            {/* Left: Back button + Course Icon + Name */}
             <div className="flex items-center space-x-3 flex-1 min-w-0">
-              {/* Menu Button (burger icon) */}
+              {/* Back Button */}
               <button
-                onClick={() => setMenuOpen(true)}
+                onClick={() => router.back()}
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
-                aria-label="Меню"
+                aria-label="Назад"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
@@ -78,6 +78,17 @@ export default function DayHeader() {
                 <h1 className="text-base font-bold truncate">{currentCourse.title}</h1>
               </div>
             </div>
+
+            {/* Right: Menu Button */}
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Меню"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
 
           {/* Day Info Bar - Compact */}
