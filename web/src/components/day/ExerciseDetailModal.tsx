@@ -96,7 +96,13 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose }: Exerc
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !exercise || !exercise.marathonExerciseId) return null;
+  // Don't render if not open or no exercise data
+  if (!isOpen || !exercise) {
+    console.log('❌ Modal not rendering - isOpen:', isOpen, 'exercise:', exercise);
+    return null;
+  }
+
+  console.log('✅ Rendering modal with exercise:', exercise);
 
   const { exerciseName, marathonExerciseName, description, videoUrl, imageUrl, type, duration } = exercise;
   const { embedUrl, type: videoType } = getVideoEmbedUrl(videoUrl || '');
