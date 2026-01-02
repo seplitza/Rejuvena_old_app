@@ -44,7 +44,8 @@ function getVideoEmbedUrl(url: string): { embedUrl: string; type: 'iframe' | 'vi
   if (url.includes('player.vimeo.com/video/') || 
       url.includes('youtube.com/embed/') || 
       url.includes('rutube.ru/play/embed/') ||
-      url.includes('vk.com/video_ext.php') ||\n      url.includes('dzen.ru/embed/')) {
+      url.includes('vk.com/video_ext.php') ||
+      url.includes('dzen.ru/embed/')) {
     return { embedUrl: url, type: 'iframe' };
   }
 
