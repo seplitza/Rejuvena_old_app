@@ -246,85 +246,104 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
         <div className="flex-1 overflow-y-auto">
           {/* Video/Image Carousel */}
           {availableContent.length > 0 && (
-            <div className="relative w-full aspect-square bg-gray-900">
-              {/* Current Content */}
-              {currentContent && (
-                <div key={currentContent.id} className="w-full h-full">
-                  {currentContent.type === 'video' ? (
-                    currentContent.videoType === 'video' ? (
-                      <video
-                        src={currentContent.embedUrl}
-                        controls
-                        className="w-full h-full object-contain"
-                        playsInline
-                        onError={() => handleContentError(currentContentIndex)}
-                      />
-                    ) : (
-                      <iframe
-                        src={currentContent.embedUrl}
-                        className="w-full h-full"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        onError={() => handleContentError(currentContentIndex)}
-                      />
-                    )
-                  ) : (
-                    <Image
-                      src={currentContent.contentPath}
-                      alt={exerciseName}
-                      fill
-                      className="object-contain"
-                      onError={() => handleContentError(currentContentIndex)}
-                    />
-                  )}
+            <div className="flex flex-col items-center bg-gray-900 py-4">
+              {/* Hint for images (GIFs) */}
+              {currentContent?.type === 'image' && (
+                <div className="w-full max-w-[400px] px-4 mb-3">
+                  <div className="bg-purple-600/90 text-white text-sm px-4 py-2.5 rounded-lg text-center">
+                    <p className="font-semibold mb-1">💡 Основное движение</p>
+                    <p className="text-xs opacity-90">
+                      Ознакомьтесь с видео инструкцией{availableContent.length > 1 && ', нажмите на стрелочку вправо'}
+                    </p>
+                  </div>
                 </div>
               )}
-
-              {/* Navigation Arrows */}
-              {availableContent.length > 1 && (
-                <>
-                  {currentContentIndex > 0 && (
-                    <button
-                      onClick={handlePrev}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all"
-                      aria-label="Предыдущее"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                  )}
-                  
-                  {currentContentIndex < availableContent.length - 1 && (
-                    <button
-                      onClick={handleNext}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all"
-                      aria-label="Следующее"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  )}
-
-                  {/* Carousel Indicators */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                    {availableContent.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentContentIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          index === currentContentIndex 
-                            ? 'bg-white w-6' 
-                            : 'bg-white/50 hover:bg-white/75'
-                        }`}
-                        aria-label={`Перейти к ${index + 1}`}
-                      />
-                    ))}
+              
+              {/* Video/Image Container - Max 400px on desktop, full width on mobile */}
+              <div className="relative w-full md:max-w-[400px] aspect-square">
+                {/* Current Content */}
+                {currentContent && (
+                  <div key={currentContent.id} className="w-full h-full">
+                    {currentContent.type === 'video' ? (
+                      currentContent.videoType === 'video' ? (
+                        <video
+                          src={currentContent.embedUrl}
+                          controls
+                          className="w-full h-full object-contain"
+                          playsInline
+                          onError={() => handleContentError(currentContentIndex)}
+                        />
+                      ) : (
+                        <iframe
+                          src={currentContent.embedUrl}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          onError={() => handleContentError(currentContentIndex)}
+                        />
+                      )
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center p-4">
+                        <div className="relative w-1/2 h-1/2">
+                          <Image
+                            src={currentContent.contentPath}
+                            alt={exerciseName}
+                            fill
+                            className="object-contain"
+                            onError={() => handleContentError(currentContentIndex)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
+                )}
+
+                {/* Navigation Arrows */}
+                {availableContent.length > 1 && (
+                  <>
+                    {currentContentIndex > 0 && (
+                      <button
+                        onClick={handlePrev}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
+                        aria-label="Предыдущее"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                    )}
+                    
+                    {currentContentIndex < availableContent.length - 1 && (
+                      <button
+                        onClick={handleNext}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
+                        aria-label="Следующее"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
+
+                    {/* Carousel Indicators */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
+                      {availableContent.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentContentIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            index === currentContentIndex 
+                              ? 'bg-white w-6' 
+                              : 'bg-white/50 hover:bg-white/75'
+                          }`}
+                          aria-label={`Перейти к ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
