@@ -146,7 +146,7 @@ export default function DayPlan() {
 
                 {/* Exercises List */}
                 {isExpanded && (
-                  <div className="px-6 pb-4 space-y-2">
+                  <div className="px-0 sm:px-6 pb-4 space-y-2">
                     {category.exercises.map((exercise, index) => {
                       const uniqueId = `${index}-${category.id}-${exercise.id}`;
                       const isActive = activeExerciseId === uniqueId;

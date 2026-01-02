@@ -79,24 +79,28 @@ function VideoPlayer({ video }: { video: VideoEmbed }) {
     case 'vimeo':
     case 'vk':
       return (
-        <div className="w-full aspect-square mb-4">
-          <iframe
-            src={video.url}
-            className="w-full h-full rounded-none md:rounded-lg"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        <div className="flex justify-center mb-4">
+          <div className="w-full max-w-[400px] aspect-square">
+            <iframe
+              src={video.url}
+              className="w-full h-full rounded-none md:rounded-lg"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </div>
       );
     
     case 'mp4':
       return (
-        <video
-          src={video.url}
-          controls
-          className="w-full aspect-square object-contain mb-4 rounded-none md:rounded-lg"
-        />
+        <div className="flex justify-center mb-4">
+          <video
+            src={video.url}
+            controls
+            className="w-full max-w-[400px] aspect-square object-contain rounded-none md:rounded-lg"
+          />
+        </div>
       );
     
     case 'telegram':
