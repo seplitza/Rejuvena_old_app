@@ -1,6 +1,7 @@
 /**
  * Day Plan Component
  * Displays collapsible categories with exercises
+ * Updated: 2026-01-02 - Force rebuild for modal functionality
  */
 
 import { useState } from 'react';
