@@ -246,7 +246,7 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
         <div className="flex-1 overflow-y-auto">
           {/* Video/Image Carousel */}
           {availableContent.length > 0 && (
-            <div className="flex flex-col items-center bg-gray-900 py-4">
+            <div className="flex flex-col items-center bg-purple-50 py-4">
               {/* Hint for images (GIFs) */}
               {currentContent?.type === 'image' && (
                 <div className="w-full max-w-[400px] px-4 mb-3">
@@ -259,48 +259,51 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                 </div>
               )}
               
-              {/* Video/Image Container - Max 400px on desktop, full width on mobile */}
-              <div className="relative w-full md:max-w-[400px] aspect-square">
-                {/* Current Content */}
-                {currentContent && (
-                  <div key={currentContent.id} className="w-full h-full">
-                    {currentContent.type === 'video' ? (
-                      currentContent.videoType === 'video' ? (
-                        <video
-                          src={currentContent.embedUrl}
-                          controls
-                          className="w-full h-full object-contain"
-                          playsInline
-                          onError={() => handleContentError(currentContentIndex)}
-                        />
-                      ) : (
-                        <iframe
-                          src={currentContent.embedUrl}
-                          className="w-full h-full"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          onError={() => handleContentError(currentContentIndex)}
-                        />
-                      )
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center p-4">
-                        <div className="relative w-1/2 h-1/2">
-                          <Image
-                            src={currentContent.contentPath}
-                            alt={exerciseName}
-                            fill
-                            className="object-contain"
+              {/* Video/Image Container - Max 400px width, flexible height */}
+              <div className="w-full max-w-[400px] px-4 md:px-0">
+                <div className="relative w-full">
+                  {/* Current Content */}
+                  {currentContent && (
+                    <div key={currentContent.id} className="w-full">
+                      {currentContent.type === 'video' ? (
+                        currentContent.videoType === 'video' ? (
+                          <video
+                            src={currentContent.embedUrl}
+                            controls
+                            className="w-full aspect-square object-contain bg-white rounded-lg"
+                            playsInline
                             onError={() => handleContentError(currentContentIndex)}
                           />
+                        ) : (
+                          <div className="w-full aspect-square bg-white rounded-lg overflow-hidden">
+                            <iframe
+                              src={currentContent.embedUrl}
+                              className="w-full h-full"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              onError={() => handleContentError(currentContentIndex)}
+                            />
+                          </div>
+                        )
+                      ) : (
+                        <div className="w-full aspect-square flex items-center justify-center bg-white rounded-lg p-4">
+                          <div className="relative w-1/2 h-1/2">
+                            <Image
+                              src={currentContent.contentPath}
+                              alt={exerciseName}
+                              fill
+                              className="object-contain"
+                              onError={() => handleContentError(currentContentIndex)}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
 
-                {/* Navigation Arrows */}
-                {availableContent.length > 1 && (
+                  {/* Navigation Arrows */}
+                  {availableContent.length > 1 && (
                   <>
                     {currentContentIndex > 0 && (
                       <button
@@ -343,6 +346,7 @@ export default function ExerciseDetailModal({ exercise, isOpen, onClose, onCheck
                     </div>
                   </>
                 )}
+                </div>
               </div>
             </div>
           )}
