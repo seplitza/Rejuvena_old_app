@@ -41,5 +41,6 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
-  }
+  },
+  "homepage": "https://seplitza.github.io/Rejuvena_old_app"
 }
